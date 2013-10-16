@@ -1,0 +1,7 @@
+## Title: Esohead Looter
+## Version: 1.0.0
+## Author: ZAM Network
+## SavedVariables: Esohead_SavedVariables
+
+Esohead.lua
+Esohead.xml
