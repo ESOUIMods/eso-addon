@@ -1,0 +1,9 @@
+<GuiXml>
+    <Controls>
+        <TopLevelControl name="EsoheadUi">
+            <OnUpdate>
+                Esohead:OnUpdate()
+            </OnUpdate>
+        </TopLevelControl>
+    </Controls>
+</GuiXml>

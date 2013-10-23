@@ -7,28 +7,153 @@
 --                                     --
 -----------------------------------------
 
-Esohead = {}
+Esohead = ZO_CallbackObject:Subclass()
 
 local savedVars
 local debug = true
+local currentTarget
 
 -----------------------------------------
---            Data Storage             --
+--           Core Functions            --
 -----------------------------------------
 
-function Esohead:Store(key, ...)
+function Esohead:New()
+    local esoInit = ZO_CallbackObject.New(self)
+    esoInit:Initialize()
+
+    return esoInit
+end
+
+function Esohead:Initialize()
+    local defaults = {
+        skyshards = {},
+        monsters = {},
+        books = {},
+        harvests = {},
+        chests = {},
+        pools = {},
+        vendors = {},
+    }
+    savedVars = ZO_SavedVars:New("Esohead_SavedVariables", 1, "Esohead", defaults)
+
+    EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_RETICLE_TARGET_CHANGED, function(eventCode, ...) self:OnTargetChange() end)
+    EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_SKILL_POINTS_CHANGED, function(eventCode, ...) self:OnSkillUp() end)
+end
+
+-- Logs saved variables
+function Esohead:Log(obj, keys, ...)
     local data = {}
+    local dataStr = ""
+
+    for i = 1, #keys do
+        if obj[keys[i]] == nil then
+            obj[keys[i]] = {}
+        end
+        obj = obj[keys[i]]
+    end
 
     for i = 1, select("#", ...) do
         local value = select(i, ...)
         data[i] = value
+        dataStr = dataStr .. "[" .. tostring(value) .. "] "
     end
 
-    if key == nil then
-        key = {}
-        key[1] = data
+    if debug then
+        EHLog("Logged data: " .. dataStr)
+    end
+
+    if #obj == 0 then
+        obj[1] = data
     else
-        key[#key+1] = data
+        obj[#obj+1] = data
+    end
+end
+
+-- Checks if we already have an entry for the object/npc within a certain x/y distance
+function Esohead:LogCheck(obj, keys, x, y)
+    local log = true
+
+    for i = 1, #keys do
+        if obj[keys[i]] == nil then
+            obj[keys[i]] = {}
+        end
+        obj = obj[keys[i]]
+    end
+
+    for i = 1, #obj do
+        local item = obj[i]
+        if (math.abs(item[2] - x) < 0.01 or math.abs(item[3] - x) < 0.01) and (math.abs(item[3] - y) < 0.01 or math.abs(item[2] - y) < 0.01) then
+            log = false
+        end
+    end
+
+    return log
+end
+
+function Esohead:OnUpdate()
+    local action, name, interactionBlocked, additionalInfo, context = GetGameCameraInteractableActionInfo()
+
+    if action and name and name ~= currentTarget then
+        local type = GetInteractionType()
+        local active = IsPlayerInteractingWithObject()
+        local x, y, a, subzone, world = self:GetUnitPosition("player")
+        local targetType = nil
+
+        -- Use
+        if type == INTERACTION_NONE and action == GetString(SI_GAMECAMERAACTIONTYPE5) then
+            currentTarget = name
+
+            EHLog("NYI: On-Use -- " .. name)
+
+        -- Harvesting
+        elseif type == INTERACTION_NONE and action == GetString(SI_GAMECAMERAACTIONTYPE5) then
+            currentTarget = name
+            targetType = "harvest"
+
+            if self:LogCheck(savedVars.harvests, {subzone, name}, x, y) then
+                self:Log(savedVars.harvests, {subzone, name}, x, y)
+            end
+
+        -- Chest
+        elseif type == INTERACTION_NONE and action == GetString(SI_GAMECAMERAACTIONTYPE12) then
+            currentTarget = name
+            targetType = "chest"
+            local lockQuality = context
+
+            if self:LogCheck(savedVars.chests, {subzone, GetString("SI_LOCKQUALITY", lockQuality)}, x, y) then
+                self:Log(savedVars.chests, {subzone, GetString("SI_LOCKQUALITY", lockQuality)}, x, y)
+            end
+
+        -- Lore/Skill Books
+        elseif active and type == INTERACTION_BOOK then
+            currentTarget = name
+            targetType = "book"
+
+            if self:LogCheck(savedVars.books, {subzone, name}, x, y) then
+                self:Log(savedVars.books, {subzone, name}, x, y)
+            end
+
+        -- Fishing Nodes
+        elseif type == INTERACTION_FISH then
+            currentTarget = name
+            targetType = "fish"
+
+            if self:LogCheck(savedVars.pools, {subzone}, x, y) then
+                self:Log(savedVars.pools, {subzone}, x, y)
+            end
+
+        -- NPC Vendor
+        elseif active and type == INTERACTION_VENDOR then
+            currentTarget = name
+            targetType = "vendor"
+
+            EHLog("NYI: NPC Vendor")
+
+        end
+
+        if targetType ~= nil then
+            self:FireCallbacks("ESOHEAD_EVENT_TARGET_CHANGED", targetType, name, x, y)
+        end
     end
 end
 
@@ -36,12 +161,12 @@ end
 --            API Helpers              --
 -----------------------------------------
 
-function Esohead:GetMap()
-    return GetMapName()
-end
-
 function Esohead:GetUnitPosition(tag)
-    return GetMapPlayerPosition(tag)
+    local x, y, a = GetMapPlayerPosition(tag)
+    local subzone = GetMapName()
+    local world = GetUnitZone(tag)
+
+    return x, y, a, subzone, world
 end
 
 function Esohead:GetUnitName(tag)
@@ -52,76 +177,46 @@ function Esohead:GetUnitLevel(tag)
     return GetUnitLevel(tag)
 end
 
-function Esohead:GetUnitZone(tag)
-    return GetUnitZone(tag)
-end
-
 -----------------------------------------
---          Event Management           --
+--        API Event Management         --
 -----------------------------------------
-
-function OnEventInit(eventCode, addOnName)
-    if addOnName == "Esohead" then
-        EHLog("Esohead Looter Loaded - Thanks!")
-        local defaults = {
-            skyshards = {},
-            monsters = {},
-            npcs = {},
-        }
-        savedVars = ZO_SavedVars:New("Esohead_SavedVariables", 1, "EHDATA", defaults)
-    end
-end
 
 -- Fired when the reticle hovers a new target
-function OnEventTargetChange(eventCode)
+function Esohead:OnTargetChange(eventCode)
     local tag = "reticleover"
     local type = GetUnitType(tag)
 
     -- ensure the unit that the reticle is hovering is a non-playing character
     if type == 2 then
-        local name = Esohead:GetUnitName(tag)
-        local x, y, a = Esohead:GetUnitPosition(tag)
-        local level = Esohead:GetUnitLevel(tag)
-        local map = Esohead:GetMap()
+        local name = self:GetUnitName(tag)
+        local x, y, a, subzone, world = self:GetUnitPosition(tag)
+        local level = self:GetUnitLevel(tag)
 
-        -- create saved variable entry for the creature and map if they don't exist
-        if savedVars.monsters[map] == nil then
-            savedVars.monsters[map] = {}
+        if self:LogCheck(savedVars.monsters, {subzone, name}, x, y) then
+            self:Log(savedVars.monsters, {subzone, name}, level, x, y)
         end
 
-        if savedVars.monsters[map][name] == nil then
-            savedVars.monsters[map][name] = {}
-        end
-
-        -- we don't want to log multiple entries for same-named creatures that are very close to each other
-        local log = true
-
-        for i = 1, #savedVars.monsters[map][name] do
-            local item = savedVars.monsters[map][name][i]
-            if math.abs(item[2] - x) < 0.01 and math.abs(item[3] - y) < 0.01 then
-                log = false
-            end
-        end
-
-        if log then
-            Esohead:Store(savedVars.monsters[map][name], level, x, y)
-        end
+        self:FireCallbacks("ESOHEAD_EVENT_TARGET_CHANGED", "npc", name, x, y, level)
     end
 end
 
-function OnEventSkyshard(eventCode, pointsOld, pointsNew, isSkyshard)
+-- fired when the player levels up OR collects a skyshard
+function Esohead:OnSkillUp(eventCode, pointsOld, pointsNew, isSkyshard)
     if isSkyshard then
-        local x, y, a = Esohead:GetUnitPosition("player")
-        local map = Esohead:GetMap()
+        local x, y, a, subzone, subzone = Esohead:GetUnitPosition("player")
 
-        Esohead:Store(savedVars.skyshards, map, x, y)
-
-        if debug then
-            EHLog(string.format("[SKYSHARD] map=%s x=%s, y=%s", map, x, y))
-        end
+        self:Log(savedVars.skyshards, {subzone}, x, y)
     end
 end
 
-EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_RETICLE_TARGET_CHANGED, OnEventTargetChange)
-EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_ADD_ON_LOADED, OnEventInit)
-EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_SKILL_POINTS_CHANGED, OnEventSkyshard)
+-----------------------------------------
+--        Addon Initialization         --
+-----------------------------------------
+
+local function OnAddOnLoaded(eventCode, addOnName)
+    if(addOnName == "Esohead") then
+        Esohead:New()
+    end
+end
+
+EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_ADD_ON_LOADED, OnAddOnLoaded)
