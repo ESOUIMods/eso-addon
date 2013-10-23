@@ -26,13 +26,13 @@ end
 
 function Esohead:Initialize()
     local defaults = {
-        skyshards = {},
-        monsters = {},
-        books = {},
-        harvests = {},
-        chests = {},
-        pools = {},
-        vendors = {},
+        skyshard = {},
+        npc = {},
+        book = {},
+        harvest = {},
+        chest = {},
+        pool = {},
+        vendor = {},
     }
     savedVars = ZO_SavedVars:New("Esohead_SavedVariables", 1, "Esohead", defaults)
 
@@ -41,15 +41,16 @@ function Esohead:Initialize()
 end
 
 -- Logs saved variables
-function Esohead:Log(obj, keys, ...)
+function Esohead:Log(nodes, ...)
     local data = {}
     local dataStr = ""
+    local sv = savedVars
 
-    for i = 1, #keys do
-        if obj[keys[i]] == nil then
-            obj[keys[i]] = {}
+    for i = 1, #nodes do
+        if sv[nodes[i]] == nil then
+            sv[nodes[i]] = {}
         end
-        obj = obj[keys[i]]
+        sv = sv[nodes[i]]
     end
 
     for i = 1, select("#", ...) do
@@ -62,26 +63,27 @@ function Esohead:Log(obj, keys, ...)
         EHLog("Logged data: " .. dataStr)
     end
 
-    if #obj == 0 then
-        obj[1] = data
+    if #sv == 0 then
+        sv[1] = data
     else
-        obj[#obj+1] = data
+        sv[#sv+1] = data
     end
 end
 
 -- Checks if we already have an entry for the object/npc within a certain x/y distance
-function Esohead:LogCheck(obj, keys, x, y)
+function Esohead:LogCheck(nodes, x, y)
     local log = true
+    local sv = savedVars
 
-    for i = 1, #keys do
-        if obj[keys[i]] == nil then
-            obj[keys[i]] = {}
+    for i = 1, #nodes do
+        if sv[nodes[i]] == nil then
+            sv[nodes[i]] = {}
         end
-        obj = obj[keys[i]]
+        sv = sv[nodes[i]]
     end
 
-    for i = 1, #obj do
-        local item = obj[i]
+    for i = 1, #sv do
+        local item = sv[i]
         if (math.abs(item[2] - x) < 0.01 or math.abs(item[3] - x) < 0.01) and (math.abs(item[3] - y) < 0.01 or math.abs(item[2] - y) < 0.01) then
             log = false
         end
@@ -97,7 +99,7 @@ function Esohead:OnUpdate()
         local type = GetInteractionType()
         local active = IsPlayerInteractingWithObject()
         local x, y, a, subzone, world = self:GetUnitPosition("player")
-        local targetType = nil
+        local targetType
 
         -- Use
         if type == INTERACTION_NONE and action == GetString(SI_GAMECAMERAACTIONTYPE5) then
@@ -110,8 +112,8 @@ function Esohead:OnUpdate()
             currentTarget = name
             targetType = "harvest"
 
-            if self:LogCheck(savedVars.harvests, {subzone, name}, x, y) then
-                self:Log(savedVars.harvests, {subzone, name}, x, y)
+            if self:LogCheck({targetType, subzone, name}, x, y) then
+                self:Log({targetType, subzone, name}, x, y)
             end
 
         -- Chest
@@ -120,8 +122,8 @@ function Esohead:OnUpdate()
             targetType = "chest"
             local lockQuality = context
 
-            if self:LogCheck(savedVars.chests, {subzone, GetString("SI_LOCKQUALITY", lockQuality)}, x, y) then
-                self:Log(savedVars.chests, {subzone, GetString("SI_LOCKQUALITY", lockQuality)}, x, y)
+            if self:LogCheck({targetType, subzone, GetString("SI_LOCKQUALITY", lockQuality)}, x, y) then
+                self:Log({targetType, subzone, GetString("SI_LOCKQUALITY", lockQuality)}, x, y)
             end
 
         -- Lore/Skill Books
@@ -129,8 +131,8 @@ function Esohead:OnUpdate()
             currentTarget = name
             targetType = "book"
 
-            if self:LogCheck(savedVars.books, {subzone, name}, x, y) then
-                self:Log(savedVars.books, {subzone, name}, x, y)
+            if self:LogCheck({targetType, subzone, name}, x, y) then
+                self:Log({targetType, subzone, name}, x, y)
             end
 
         -- Fishing Nodes
@@ -138,8 +140,8 @@ function Esohead:OnUpdate()
             currentTarget = name
             targetType = "fish"
 
-            if self:LogCheck(savedVars.pools, {subzone}, x, y) then
-                self:Log(savedVars.pools, {subzone}, x, y)
+            if self:LogCheck({targetType, subzone}, x, y) then
+                self:Log({targetType, subzone}, x, y)
             end
 
         -- NPC Vendor
@@ -192,8 +194,8 @@ function Esohead:OnTargetChange(eventCode)
         local x, y, a, subzone, world = self:GetUnitPosition(tag)
         local level = self:GetUnitLevel(tag)
 
-        if self:LogCheck(savedVars.monsters, {subzone, name}, x, y) then
-            self:Log(savedVars.monsters, {subzone, name}, level, x, y)
+        if self:LogCheck({"npc", subzone, name}, x, y) then
+            self:Log({"npc", subzone, name}, level, x, y)
         end
 
         self:FireCallbacks("ESOHEAD_EVENT_TARGET_CHANGED", "npc", name, x, y, level)
@@ -205,7 +207,7 @@ function Esohead:OnSkillUp(eventCode, pointsOld, pointsNew, isSkyshard)
     if isSkyshard then
         local x, y, a, subzone, subzone = Esohead:GetUnitPosition("player")
 
-        self:Log(savedVars.skyshards, {subzone}, x, y)
+        self:Log({"skyshard", subzone}, x, y)
     end
 end
 
