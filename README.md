@@ -45,6 +45,8 @@ Esohead_SavedVariables =
 ```
 
 ## Events
-###ESOHEAD_EVENT_TARGET_CHANGED
+**ESOHEAD_EVENT_TARGET_CHANGED**
+
 _returns **string** type, **string** targetName, **float** xPos, **float** yPos, **int** targetLevel_
-Provides more targeting data than the EVENT_RETICLE_TARGET_CHANGED event provided by Zenimax (which only fires on NPCs)
+
+Offers more targeting data than the EVENT_RETICLE_TARGET_CHANGED event provided by Zenimax (which only fires on NPCs)
