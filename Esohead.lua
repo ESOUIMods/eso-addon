@@ -2,7 +2,7 @@
 --                                     --
 --     E s o h e a d   L o o t e r     --
 --                                     --
---    Patch: 0.27.8.646907             --
+--    Patch: 0.27.9.659475             --
 --    E-mail: feedback@esohead.com     --
 --                                     --
 -----------------------------------------
@@ -10,7 +10,6 @@
 Esohead = ZO_CallbackObject:Subclass()
 
 local savedVars
-local debug = true
 local currentTarget
 
 -----------------------------------------
@@ -31,13 +30,19 @@ function Esohead:Initialize()
         book = {},
         harvest = {},
         chest = {},
-        pool = {},
+        fish = {},
         vendor = {},
+        debug = 1,
     }
     savedVars = ZO_SavedVars:New("Esohead_SavedVariables", 1, "Esohead", defaults)
 
+    if savedVars.debug == 1 then
+        Esohead:Debug("Esohead addon initialized. Debugging is enabled.")
+    else
+        Esohead:Debug("Esohead addon initialized. Debugging is disabled.")
+    end
+
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_RETICLE_TARGET_CHANGED, function(eventCode, ...) self:OnTargetChange() end)
-    EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_SKILL_POINTS_CHANGED, function(eventCode, ...) self:OnSkillUp() end)
 end
 
 -- Logs saved variables
@@ -59,8 +64,10 @@ function Esohead:Log(nodes, ...)
         dataStr = dataStr .. "[" .. tostring(value) .. "] "
     end
 
-    if debug then
-        EHLog("Logged data: " .. dataStr)
+    if savedVars.debug == 1 then
+        self:Debug("---")
+        self:Debug("Logged data: " .. dataStr)
+        self:Debug(nodes)
     end
 
     if #sv == 0 then
@@ -84,7 +91,8 @@ function Esohead:LogCheck(nodes, x, y)
 
     for i = 1, #sv do
         local item = sv[i]
-        if (math.abs(item[2] - x) < 0.01 or math.abs(item[3] - x) < 0.01) and (math.abs(item[3] - y) < 0.01 or math.abs(item[2] - y) < 0.01) then
+
+        if math.abs(item[1] - x) < 0.01 and math.abs(item[2] - y) then
             log = false
         end
     end
@@ -92,6 +100,22 @@ function Esohead:LogCheck(nodes, x, y)
     return log
 end
 
+-- formats a number with commas on thousands
+function Esohead:NumberFormat(num)
+    local formatted = num
+    local k
+
+    while true do
+        formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
+        if k == 0 then
+            break
+        end
+    end
+
+    return formatted
+end
+
+-- Fired every frame in-game, listens for target changes since the API is insufficient
 function Esohead:OnUpdate()
     local action, name, interactionBlocked, additionalInfo, context = GetGameCameraInteractableActionInfo()
 
@@ -105,10 +129,25 @@ function Esohead:OnUpdate()
         if type == INTERACTION_NONE and action == GetString(SI_GAMECAMERAACTIONTYPE5) then
             currentTarget = name
 
-            EHLog("NYI: On-Use -- " .. name)
+            if name == "Skyshard" then
+                targetType = "skyshard"
+
+                if self:LogCheck({targetType, subzone}, x, y) then
+                    self:Log({targetType, subzone}, x, y)
+                end
+            end
+
+        -- Lootable
+        elseif action == GetString(SI_GAMECAMERAACTIONTYPE1) then
+            currentTarget = name
+            targetType = "lootable"
+
+            if self:LogCheck({targetType, subzone, name}, x, y) then
+                self:Log({targetType, subzone, name}, x, y)
+            end
 
         -- Harvesting
-        elseif type == INTERACTION_NONE and action == GetString(SI_GAMECAMERAACTIONTYPE5) then
+        elseif action == GetString(SI_GAMECAMERAACTIONTYPE3) then
             currentTarget = name
             targetType = "harvest"
 
@@ -136,7 +175,7 @@ function Esohead:OnUpdate()
             end
 
         -- Fishing Nodes
-        elseif type == INTERACTION_FISH then
+        elseif action == GetString(SI_GAMECAMERAACTIONTYPE16) then
             currentTarget = name
             targetType = "fish"
 
@@ -149,7 +188,7 @@ function Esohead:OnUpdate()
             currentTarget = name
             targetType = "vendor"
 
-            EHLog("NYI: NPC Vendor")
+            self:Debug("NYI: NPC Vendor")
 
         end
 
@@ -195,19 +234,165 @@ function Esohead:OnTargetChange(eventCode)
         local level = self:GetUnitLevel(tag)
 
         if self:LogCheck({"npc", subzone, name}, x, y) then
-            self:Log({"npc", subzone, name}, level, x, y)
+            self:Log({"npc", subzone, name}, x, y, level)
         end
 
         self:FireCallbacks("ESOHEAD_EVENT_TARGET_CHANGED", "npc", name, x, y, level)
     end
 end
 
--- fired when the player levels up OR collects a skyshard
-function Esohead:OnSkillUp(eventCode, pointsOld, pointsNew, isSkyshard)
-    if isSkyshard then
-        local x, y, a, subzone, subzone = Esohead:GetUnitPosition("player")
+-----------------------------------------
+--           Debug Logger              --
+-----------------------------------------
 
-        self:Log({"skyshard", subzone}, x, y)
+local function EmitMessage(text)
+    if(CHAT_SYSTEM)
+    then
+        if(text == "")
+        then
+            text = "[Empty String]"
+        end
+
+        CHAT_SYSTEM:AddMessage(text)
+    end
+end
+
+local function EmitTable(t, indent, tableHistory)
+    indent          = indent or "."
+    tableHistory    = tableHistory or {}
+
+    for k, v in pairs(t)
+    do
+        local vType = type(v)
+
+        EmitMessage(indent.."("..vType.."): "..tostring(k).." = "..tostring(v))
+
+        if(vType == "table")
+        then
+            if(tableHistory[v])
+            then
+                EmitMessage(indent.."Avoiding cycle on table...")
+            else
+                tableHistory[v] = true
+                EmitTable(v, indent.."  ", tableHistory)
+            end
+        end
+    end
+end
+
+function Esohead:Debug(...)
+    for i = 1, select("#", ...) do
+        local value = select(i, ...)
+        if(type(value) == "table")
+        then
+            EmitTable(value)
+        else
+            EmitMessage(tostring (value))
+        end
+    end
+end
+
+-----------------------------------------
+--           Slash Command             --
+-----------------------------------------
+
+SLASH_COMMANDS["/esohead"] = function (cmd)
+    local commands = {}
+    local index = 1
+    for i in string.gmatch(cmd, "%S+") do
+        if (i ~= nil and i ~= "") then
+            commands[index] = i
+            index = index + 1
+        end
+    end
+
+    if #commands == 0 then
+        return Esohead:Debug("Please enter a valid command")
+    end
+
+    if #commands == 2 and commands[1] == "debug" then
+        if commands[2] == "on" then
+            Esohead:Debug("Esohead debugger toggled on")
+            savedVars.debug = 1
+        elseif commands[2] == "off" then
+            Esohead:Debug("Esohead debugger toggled off")
+            savedVars.debug = 0
+        end
+
+    elseif commands[1] == "reset" then
+        savedVars.skyshard = {}
+        savedVars.npc = {}
+        savedVars.book = {}
+        savedVars.harvest = {}
+        savedVars.lootable = {}
+        savedVars.chest = {}
+        savedVars.fish = {}
+        savedVars.vendor = {}
+
+        Esohead:Debug("Saved data has been completely reset")
+
+    elseif commands[1] == "datalog" then
+        Esohead:Debug("---")
+        Esohead:Debug("Complete list of gathered data:")
+        Esohead:Debug("---")
+
+        local skyshard = 0
+        local npc = 0
+        local harvest = 0
+        local chest = 0
+        local lootable = 0
+        local fish = 0
+        local book = 0
+
+        for zone, t1 in pairs(savedVars.skyshard) do
+            skyshard = skyshard + #savedVars.skyshard[zone]
+        end
+
+        for zone, t1 in pairs(savedVars.npc) do
+            for data, t2 in pairs(savedVars.npc[zone]) do
+                npc = npc + #savedVars.npc[zone][data]
+            end
+        end
+
+        for zone, t1 in pairs(savedVars.harvest) do
+            for data, t2 in pairs(savedVars.harvest[zone]) do
+                harvest = harvest + #savedVars.harvest[zone][data]
+            end
+        end
+
+        for zone, t1 in pairs(savedVars.chest) do
+            for data, t2 in pairs(savedVars.chest[zone]) do
+                chest = chest + #savedVars.chest[zone][data]
+            end
+        end
+
+        for zone, t1 in pairs(savedVars.lootable) do
+            for data, t2 in pairs(savedVars.lootable[zone]) do
+                lootable = lootable + #savedVars.lootable[zone][data]
+            end
+        end
+
+        for zone, t1 in pairs(savedVars.fish) do
+            for data, t2 in pairs(savedVars.fish[zone]) do
+                fish = fish + #savedVars.fish[zone][data]
+            end
+        end
+
+        for zone, t1 in pairs(savedVars.book) do
+            for data, t2 in pairs(savedVars.book[zone]) do
+                book = book + #savedVars.book[zone][data]
+            end
+        end
+
+        Esohead:Debug("Skyshards: "        .. Esohead:NumberFormat(skyshard))
+        Esohead:Debug("Monster/NPCs: "     .. Esohead:NumberFormat(npc))
+        Esohead:Debug("Lore/Skill Books: " .. Esohead:NumberFormat(book))
+        Esohead:Debug("Harvest Nodes: "    .. Esohead:NumberFormat(harvest))
+        Esohead:Debug("Treasure Chests: "  .. Esohead:NumberFormat(chest))
+        Esohead:Debug("Lootable Nodes: "   .. Esohead:NumberFormat(lootable))
+        Esohead:Debug("Fishing Pools: "    .. Esohead:NumberFormat(fish))
+
+        Esohead:Debug("---")
     end
 end
 
