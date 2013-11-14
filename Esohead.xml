@@ -5,5 +5,17 @@
                 Esohead:OnUpdate()
             </OnUpdate>
         </TopLevelControl>
+
+        <TopLevelControl name="EsoheadCoordinates">
+            <OnUpdate>
+                Esohead:UpdateCoordinates()
+            </OnUpdate>
+
+            <Controls>
+                <Label name="$(parent)Value" font="ZoFontGameLargeBold" color="CFDCBD" wrapMode="ELLIPSIS" verticalAlignment="CENTER" text="">
+                    <AnchorFill />
+                </Label>
+            </Controls>
+        </TopLevelControl>
     </Controls>
 </GuiXml>

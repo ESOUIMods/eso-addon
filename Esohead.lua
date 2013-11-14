@@ -32,6 +32,7 @@ function Esohead:Initialize()
         chest = {},
         fish = {},
         vendor = {},
+        interactable = {},
         debug = 1,
     }
     savedVars = ZO_SavedVars:New("Esohead_SavedVariables", 1, "Esohead", defaults)
@@ -140,7 +141,7 @@ function Esohead:OnUpdate()
         -- Lootable
         elseif action == GetString(SI_GAMECAMERAACTIONTYPE1) then
             currentTarget = name
-            targetType = "lootable"
+            targetType = "interactable"
 
             if self:LogCheck({targetType, subzone, name}, x, y) then
                 self:Log({targetType, subzone, name}, x, y)
@@ -195,6 +196,35 @@ function Esohead:OnUpdate()
         if targetType ~= nil then
             self:FireCallbacks("ESOHEAD_EVENT_TARGET_CHANGED", targetType, name, x, y)
         end
+    end
+end
+
+-----------------------------------------
+--         Coordinate System           --
+-----------------------------------------
+
+function Esohead:UpdateCoordinates()
+    local mouseOverControl = WINDOW_MANAGER:GetMouseOverControl();
+
+    if (mouseOverControl == ZO_WorldMapContainer or mouseOverControl:GetParent() == ZO_WorldMapContainer) then
+
+        local currentOffsetX = ZO_WorldMapContainer:GetLeft()
+        local currentOffsetY = ZO_WorldMapContainer:GetTop()
+        local parentOffsetX = ZO_WorldMap:GetLeft()
+        local parentOffsetY = ZO_WorldMap:GetTop()
+        local mouseX, mouseY = GetUIMousePosition()
+        local mapWidth, mapHeight = ZO_WorldMapContainer:GetDimensions()
+        local parentWidth, parentHeight = ZO_WorldMap:GetDimensions()
+
+        local normalizedX = math.floor((((mouseX - currentOffsetX) / mapWidth) * 100) + 0.5);
+        local normalizedY = math.floor((((mouseY - currentOffsetY) / mapHeight) * 100) + 0.5);
+
+        EsoheadCoordinates:SetAlpha(0.8)
+        EsoheadCoordinates:SetDrawLayer(ZO_WorldMap:GetDrawLayer() + 1)
+        EsoheadCoordinates:SetAnchor(TOPLEFT, nil, TOPLEFT, parentOffsetX + 130, parentOffsetY + parentHeight - 33)
+        EsoheadCoordinatesValue:SetText(normalizedX .. ", " .. normalizedY)
+    else
+        EsoheadCoordinates:SetAlpha(0)
     end
 end
 
@@ -324,7 +354,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
         savedVars.npc = {}
         savedVars.book = {}
         savedVars.harvest = {}
-        savedVars.lootable = {}
+        savedVars.interactable = {}
         savedVars.chest = {}
         savedVars.fish = {}
         savedVars.vendor = {}
@@ -340,7 +370,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
         local npc = 0
         local harvest = 0
         local chest = 0
-        local lootable = 0
+        local interactable = 0
         local fish = 0
         local book = 0
 
@@ -366,9 +396,9 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
             end
         end
 
-        for zone, t1 in pairs(savedVars.lootable) do
-            for data, t2 in pairs(savedVars.lootable[zone]) do
-                lootable = lootable + #savedVars.lootable[zone][data]
+        for zone, t1 in pairs(savedVars.interactable) do
+            for data, t2 in pairs(savedVars.interactable[zone]) do
+                interactable = interactable + #savedVars.interactable[zone][data]
             end
         end
 
@@ -389,7 +419,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
         Esohead:Debug("Lore/Skill Books: " .. Esohead:NumberFormat(book))
         Esohead:Debug("Harvest Nodes: "    .. Esohead:NumberFormat(harvest))
         Esohead:Debug("Treasure Chests: "  .. Esohead:NumberFormat(chest))
-        Esohead:Debug("Lootable Nodes: "   .. Esohead:NumberFormat(lootable))
+        Esohead:Debug("Lootable Nodes: "   .. Esohead:NumberFormat(interactable))
         Esohead:Debug("Fishing Pools: "    .. Esohead:NumberFormat(fish))
 
         Esohead:Debug("---")
