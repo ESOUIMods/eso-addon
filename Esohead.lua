@@ -93,7 +93,7 @@ function Esohead:LogCheck(nodes, x, y)
     for i = 1, #sv do
         local item = sv[i]
 
-        if math.abs(item[1] - x) < 0.01 and math.abs(item[2] - y) then
+        if math.abs(item[1] - x) < 0.01 and math.abs(item[2] - y) < 0.01 then
             log = false
         end
     end
@@ -221,8 +221,8 @@ function Esohead:UpdateCoordinates()
 
         EsoheadCoordinates:SetAlpha(0.8)
         EsoheadCoordinates:SetDrawLayer(ZO_WorldMap:GetDrawLayer() + 1)
-        EsoheadCoordinates:SetAnchor(TOPLEFT, nil, TOPLEFT, parentOffsetX + 130, parentOffsetY + parentHeight - 33)
-        EsoheadCoordinatesValue:SetText(normalizedX .. ", " .. normalizedY)
+        EsoheadCoordinates:SetAnchor(TOPLEFT, nil, TOPLEFT, parentOffsetX + 0, parentOffsetY + parentHeight)
+        EsoheadCoordinatesValue:SetText("Coordinates: " .. normalizedX .. ", " .. normalizedY)
     else
         EsoheadCoordinates:SetAlpha(0)
     end
@@ -325,6 +325,16 @@ end
 -----------------------------------------
 --           Slash Command             --
 -----------------------------------------
+
+SLASH_COMMANDS["/wayshrine"] = function(cmd)
+    for i=1, 200 do
+        local xLoc, zLoc, iconType, icon = GetPOIMapInfo(1, 1)
+        if name == "Khenarthi's Roost Wayshrine" then
+            Esohead:Debug(GetFastTravelNodeInfo(i))
+            break;
+        end
+    end
+end
 
 SLASH_COMMANDS["/esohead"] = function (cmd)
     local commands = {}
