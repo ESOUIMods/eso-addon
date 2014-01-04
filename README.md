@@ -21,9 +21,6 @@ Toggles verbose addon debugging.
 ```/esohead datalog```
 Displays the total number of each data type the addon has gathered.
 
-```/reloadui```
-Reloads your user interface, also dumps all saved variables to your hard drive without having to leave the game.
-
 ## Core Functions
 **Esohead:Log** _(**object** nodes, ...)_<br />
 Logs any type of data to the Esohead Saved Variables file. Takes an ordered table of strings that define the node
