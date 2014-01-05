@@ -2,14 +2,16 @@
 --                                     --
 --     E s o h e a d   L o o t e r     --
 --                                     --
---    Patch: 0.27.9.659475             --
+--    Patch: eso.live.1.0.0.708405     --
 --    E-mail: feedback@esohead.com     --
 --                                     --
 -----------------------------------------
 
 Esohead = ZO_CallbackObject:Subclass()
 
-local savedVars
+local savedVars = {}
+local savedVarsVersion = 1
+local debugDefault = 1
 local currentTarget
 
 -----------------------------------------
@@ -24,20 +26,24 @@ function Esohead:New()
 end
 
 function Esohead:Initialize()
-    local defaults = {
-        skyshard = {},
-        npc = {},
-        book = {},
-        harvest = {},
-        chest = {},
-        fish = {},
-        vendor = {},
-        interactable = {},
-        debug = 1,
+    local dataDefault = {
+        data = {}
     }
-    savedVars = ZO_SavedVars:New("Esohead_SavedVariables", 1, "Esohead", defaults)
 
-    if savedVars.debug == 1 then
+    savedVars = {
+        ["internal"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", savedVarsVersion, "internal", { debug = debugDefault }),
+        ["skyshard"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", savedVarsVersion, "skyshard", dataDefault),
+        ["book"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", savedVarsVersion, "book", dataDefault),
+        ["harvest"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", savedVarsVersion, "harvest", dataDefault),
+        ["chest"]        = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", savedVarsVersion, "chest", dataDefault),
+        ["fish"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", savedVarsVersion, "fish", dataDefault),
+        ["npc"]          = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", savedVarsVersion, "npc", dataDefault),
+        ["vendor"]       = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", savedVarsVersion, "vendor", dataDefault),
+        ["interactable"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", savedVarsVersion, "interactable", dataDefault),
+        ["rune"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", savedVarsVersion, "rune", dataDefault),
+    }
+
+    if savedVars["internal"].debug == 1 then
         Esohead:Debug("Esohead addon initialized. Debugging is enabled.")
     else
         Esohead:Debug("Esohead addon initialized. Debugging is disabled.")
@@ -47,10 +53,17 @@ function Esohead:Initialize()
 end
 
 -- Logs saved variables
-function Esohead:Log(nodes, ...)
+function Esohead:Log(type, nodes, ...)
     local data = {}
     local dataStr = ""
-    local sv = savedVars
+    local sv
+
+    if savedVars[type] == nil or savedVars[type].data == nil then
+        Esohead:Debug("Attempted to log unknown type: " .. type)
+        return
+    else
+        sv = savedVars[type].data
+    end
 
     for i = 1, #nodes do
         if sv[nodes[i]] == nil then
@@ -65,10 +78,8 @@ function Esohead:Log(nodes, ...)
         dataStr = dataStr .. "[" .. tostring(value) .. "] "
     end
 
-    if savedVars.debug == 1 then
-        self:Debug("---")
-        self:Debug("Logged data: " .. dataStr)
-        self:Debug(nodes)
+    if savedVars["internal"].debug == 1 then
+        self:Debug("Logged [" .. type .. "] data: " .. dataStr)
     end
 
     if #sv == 0 then
@@ -79,9 +90,15 @@ function Esohead:Log(nodes, ...)
 end
 
 -- Checks if we already have an entry for the object/npc within a certain x/y distance
-function Esohead:LogCheck(nodes, x, y)
+function Esohead:LogCheck(type, nodes, x, y)
     local log = true
-    local sv = savedVars
+    local sv
+
+    if savedVars[type] == nil or savedVars[type].data == nil then
+        return true
+    else
+        sv = savedVars[type].data
+    end
 
     for i = 1, #nodes do
         if sv[nodes[i]] == nil then
@@ -120,7 +137,7 @@ end
 function Esohead:OnUpdate()
     local action, name, interactionBlocked, additionalInfo, context = GetGameCameraInteractableActionInfo()
 
-    if action and name and name ~= currentTarget then
+    if action ~= nil and name ~= nil and name ~= currentTarget then
         local type = GetInteractionType()
         local active = IsPlayerInteractingWithObject()
         local x, y, a, subzone, world = self:GetUnitPosition("player")
@@ -129,12 +146,11 @@ function Esohead:OnUpdate()
         -- Use
         if type == INTERACTION_NONE and action == GetString(SI_GAMECAMERAACTIONTYPE5) then
             currentTarget = name
+            targetType = "skyshard"
 
             if name == "Skyshard" then
-                targetType = "skyshard"
-
-                if self:LogCheck({targetType, subzone}, x, y) then
-                    self:Log({targetType, subzone}, x, y)
+                if self:LogCheck(targetType, {subzone}, x, y) then
+                    self:Log(targetType, {subzone}, x, y)
                 end
             end
 
@@ -143,17 +159,22 @@ function Esohead:OnUpdate()
             currentTarget = name
             targetType = "interactable"
 
-            if self:LogCheck({targetType, subzone, name}, x, y) then
-                self:Log({targetType, subzone, name}, x, y)
+            if GetUnitType("reticleover") ~= 2 and self:LogCheck(targetType, {subzone, name}, x, y) then
+                self:Log(targetType, {subzone, name}, x, y)
             end
 
         -- Harvesting
-        elseif action == GetString(SI_GAMECAMERAACTIONTYPE3) then
+        elseif active and type == INTERACTION_HARVEST then
             currentTarget = name
-            targetType = "harvest"
 
-            if self:LogCheck({targetType, subzone, name}, x, y) then
-                self:Log({targetType, subzone, name}, x, y)
+            if (string.find(name,"Rune")) then
+                targetType = "rune"
+            else
+                targetType = "harvest"
+            end
+
+            if self:LogCheck(targetType, {subzone, name}, x, y) then
+                self:Log(targetType, {subzone, name}, x, y)
             end
 
         -- Chest
@@ -162,8 +183,10 @@ function Esohead:OnUpdate()
             targetType = "chest"
             local lockQuality = context
 
-            if self:LogCheck({targetType, subzone, GetString("SI_LOCKQUALITY", lockQuality)}, x, y) then
-                self:Log({targetType, subzone, GetString("SI_LOCKQUALITY", lockQuality)}, x, y)
+            if GetString("SI_LOCKQUALITY", lockQuality) ~= "" then
+                if self:LogCheck(targetType, {subzone, GetString("SI_LOCKQUALITY", lockQuality)}, x, y) then
+                    self:Log(targetType, {subzone, GetString("SI_LOCKQUALITY", lockQuality)}, x, y)
+                end
             end
 
         -- Lore/Skill Books
@@ -171,8 +194,8 @@ function Esohead:OnUpdate()
             currentTarget = name
             targetType = "book"
 
-            if self:LogCheck({targetType, subzone, name}, x, y) then
-                self:Log({targetType, subzone, name}, x, y)
+            if self:LogCheck(targetType, {subzone, name}, x, y) then
+                self:Log(targetType, {subzone, name}, x, y)
             end
 
         -- Fishing Nodes
@@ -180,8 +203,8 @@ function Esohead:OnUpdate()
             currentTarget = name
             targetType = "fish"
 
-            if self:LogCheck({targetType, subzone}, x, y) then
-                self:Log({targetType, subzone}, x, y)
+            if self:LogCheck(targetType, {subzone}, x, y) then
+                self:Log(targetType, {subzone}, x, y)
             end
 
         -- NPC Vendor
@@ -189,8 +212,41 @@ function Esohead:OnUpdate()
             currentTarget = name
             targetType = "vendor"
 
-            self:Debug("NYI: NPC Vendor")
+            local storeItems = {}
 
+            if self:LogCheck(targetType, {subzone, name}, x, y) then
+                for entryIndex = 1, GetNumStoreItems() do
+                    local icon, name, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyId1, currencyQuantity1, currencyIcon1,
+                    currencyName1, currencyType2, currencyId2, currencyQuantity2, currencyIcon2, currencyName2 = GetStoreEntryInfo(entryIndex)
+
+                    if(stack > 0) then
+                        local itemData =
+                        {
+                            icon,
+                            name,
+                            stack,
+                            price,
+                            sellPrice,
+                            quality,
+                            questNameColor,
+                            currencyName1,
+                            currencyType1,
+                            currencyId1,
+                            currencyQuantity1,
+                            currencyName2,
+                            currencyType2,
+                            currencyId2,
+                            currencyQuantity2,
+                            { GetStoreEntryTypeInfo(entryIndex) },
+                            GetStoreEntryStatValue(entryIndex),
+                        }
+
+                        storeItems[#storeItems + 1] = itemData
+                    end
+                end
+
+                self:Log(targetType, {subzone, name}, x, y, storeItems)
+            end
         end
 
         if targetType ~= nil then
@@ -248,6 +304,10 @@ function Esohead:GetUnitLevel(tag)
     return GetUnitLevel(tag)
 end
 
+function Esohead:GetLootEntry(index)
+    return GetLootItemInfo(index)
+end
+
 -----------------------------------------
 --        API Event Management         --
 -----------------------------------------
@@ -263,8 +323,8 @@ function Esohead:OnTargetChange(eventCode)
         local x, y, a, subzone, world = self:GetUnitPosition(tag)
         local level = self:GetUnitLevel(tag)
 
-        if self:LogCheck({"npc", subzone, name}, x, y) then
-            self:Log({"npc", subzone, name}, x, y, level)
+        if self:LogCheck("npc", {subzone, name}, x, y) then
+            self:Log("npc", {subzone, name}, x, y, level)
         end
 
         self:FireCallbacks("ESOHEAD_EVENT_TARGET_CHANGED", "npc", name, x, y, level)
@@ -326,16 +386,6 @@ end
 --           Slash Command             --
 -----------------------------------------
 
-SLASH_COMMANDS["/wayshrine"] = function(cmd)
-    for i=1, 200 do
-        local xLoc, zLoc, iconType, icon = GetPOIMapInfo(1, 1)
-        if name == "Khenarthi's Roost Wayshrine" then
-            Esohead:Debug(GetFastTravelNodeInfo(i))
-            break;
-        end
-    end
-end
-
 SLASH_COMMANDS["/esohead"] = function (cmd)
     local commands = {}
     local index = 1
@@ -353,21 +403,18 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
     if #commands == 2 and commands[1] == "debug" then
         if commands[2] == "on" then
             Esohead:Debug("Esohead debugger toggled on")
-            savedVars.debug = 1
+            savedVars["internal"].debug = 1
         elseif commands[2] == "off" then
             Esohead:Debug("Esohead debugger toggled off")
-            savedVars.debug = 0
+            savedVars["internal"].debug = 0
         end
 
     elseif commands[1] == "reset" then
-        savedVars.skyshard = {}
-        savedVars.npc = {}
-        savedVars.book = {}
-        savedVars.harvest = {}
-        savedVars.interactable = {}
-        savedVars.chest = {}
-        savedVars.fish = {}
-        savedVars.vendor = {}
+        for type,sv in pairs(savedVars) do
+            if type ~= "internal" then
+                savedVars[type].data = {}
+            end
+        end
 
         Esohead:Debug("Saved data has been completely reset")
 
@@ -376,61 +423,40 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
         Esohead:Debug("Complete list of gathered data:")
         Esohead:Debug("---")
 
-        local skyshard = 0
-        local npc = 0
-        local harvest = 0
-        local chest = 0
-        local interactable = 0
-        local fish = 0
-        local book = 0
+        local counter = {
+            ["skyshard"] = 0,
+            ["npc"] = 0,
+            ["harvest"] = 0,
+            ["chest"] = 0,
+            ["interactable"] = 0,
+            ["fish"] = 0,
+            ["book"] = 0,
+            ["vendor"] = 0,
+            ["rune"] = 0,
+        }
 
-        for zone, t1 in pairs(savedVars.skyshard) do
-            skyshard = skyshard + #savedVars.skyshard[zone]
-        end
-
-        for zone, t1 in pairs(savedVars.npc) do
-            for data, t2 in pairs(savedVars.npc[zone]) do
-                npc = npc + #savedVars.npc[zone][data]
+        for type,sv in pairs(savedVars) do
+            if type ~= "internal" and type == "skyshard" then
+                for zone, t1 in pairs(savedVars[type].data) do
+                    counter[type] = counter[type] + #savedVars[type].data[zone]
+                end
+            elseif type ~= "internal" then
+                for zone, t1 in pairs(savedVars[type].data) do
+                    for data, t2 in pairs(savedVars[type].data[zone]) do
+                        counter[type] = counter[type] + #savedVars[type].data[zone][data]
+                    end
+                end
             end
         end
 
-        for zone, t1 in pairs(savedVars.harvest) do
-            for data, t2 in pairs(savedVars.harvest[zone]) do
-                harvest = harvest + #savedVars.harvest[zone][data]
-            end
-        end
-
-        for zone, t1 in pairs(savedVars.chest) do
-            for data, t2 in pairs(savedVars.chest[zone]) do
-                chest = chest + #savedVars.chest[zone][data]
-            end
-        end
-
-        for zone, t1 in pairs(savedVars.interactable) do
-            for data, t2 in pairs(savedVars.interactable[zone]) do
-                interactable = interactable + #savedVars.interactable[zone][data]
-            end
-        end
-
-        for zone, t1 in pairs(savedVars.fish) do
-            for data, t2 in pairs(savedVars.fish[zone]) do
-                fish = fish + #savedVars.fish[zone][data]
-            end
-        end
-
-        for zone, t1 in pairs(savedVars.book) do
-            for data, t2 in pairs(savedVars.book[zone]) do
-                book = book + #savedVars.book[zone][data]
-            end
-        end
-
-        Esohead:Debug("Skyshards: "        .. Esohead:NumberFormat(skyshard))
-        Esohead:Debug("Monster/NPCs: "     .. Esohead:NumberFormat(npc))
-        Esohead:Debug("Lore/Skill Books: " .. Esohead:NumberFormat(book))
-        Esohead:Debug("Harvest Nodes: "    .. Esohead:NumberFormat(harvest))
-        Esohead:Debug("Treasure Chests: "  .. Esohead:NumberFormat(chest))
-        Esohead:Debug("Lootable Nodes: "   .. Esohead:NumberFormat(interactable))
-        Esohead:Debug("Fishing Pools: "    .. Esohead:NumberFormat(fish))
+        Esohead:Debug("Skyshards: "        .. Esohead:NumberFormat(counter["skyshard"]))
+        Esohead:Debug("Monster/NPCs: "     .. Esohead:NumberFormat(counter["npc"]))
+        Esohead:Debug("Lore/Skill Books: " .. Esohead:NumberFormat(counter["book"]))
+        Esohead:Debug("Harvest Nodes: "    .. Esohead:NumberFormat(counter["harvest"]))
+        Esohead:Debug("Treasure Chests: "  .. Esohead:NumberFormat(counter["skyshard"]))
+        Esohead:Debug("Lootable Nodes: "   .. Esohead:NumberFormat(counter["interactable"]))
+        Esohead:Debug("Fishing Pools: "    .. Esohead:NumberFormat(counter["fish"]))
+        Esohead:Debug("Runes: "            .. Esohead:NumberFormat(counter["rune"]))
 
         Esohead:Debug("---")
     end
