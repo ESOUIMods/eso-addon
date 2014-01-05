@@ -22,13 +22,13 @@ Toggles verbose addon debugging.
 Displays the total number of each data type the addon has gathered.
 
 ## Core Functions
-**Esohead:Log** _(**object** nodes, ...)_<br />
+**Esohead:Log** _(**string** type, **object** nodes, ...)_<br />
 Logs any type of data to the Esohead Saved Variables file. Takes an ordered table of strings that define the node
 and/or sub-nodes that data will be logged to.
 
 For example
 ```lua
-Esohead:Log({ "chests", "Some Zone", "Some Sub-Zone" }, 0.67, 0.47)
+Esohead:Log("npc", { "Glenumbra", "Covenant Archer" }, 0.67, 0.47)
 ```
 Would create an entry in saved variables like this
 ```lua
@@ -36,23 +36,20 @@ Esohead_SavedVariables =
 {
     ["Default"] =
     {
-        ["@account"] =
+        ["@mdurrant"] =
         {
-            ["CharacterName"] =
+            ["$AccountWide"] =
             {
-                ["Esohead"] =
+                ["npc"] =
                 {
-                    ["chests"] =
+                    ["Glenumbra"] =
                     {
-                        ["Some Zone"] =
+                        ["Covenant Archer"] =
                         {
-                            ["Some Sub-Zone"] =
+                            [1] =
                             {
-                                [1] =
-                                {
-                                    [1] = 0.67,
-                                    [2] = 0.47,
-                                },
+                                [1] = 0.67,
+                                [2] = 0.47,
                             },
                         },
                     },
@@ -63,7 +60,7 @@ Esohead_SavedVariables =
 },
 ```
 <br />
-**Esohead:LogCheck** _(**object** nodes, x, y)_<br />
+**Esohead:LogCheck** _(**string** type, **object** nodes, x, y)_<br />
 Checks an ordered table of nodes for an x and y position, returns false if there is an entry that is close to those coordinates.
 
 **Esohead:NumberFormat** _(**int** number)_<br />
