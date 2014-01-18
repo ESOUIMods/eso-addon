@@ -260,10 +260,10 @@ end
 -----------------------------------------
 
 function Esohead:UpdateCoordinates()
+
     local mouseOverControl = WINDOW_MANAGER:GetMouseOverControl();
 
     if (mouseOverControl == ZO_WorldMapContainer or mouseOverControl:GetParent() == ZO_WorldMapContainer) then
-
         local currentOffsetX = ZO_WorldMapContainer:GetLeft()
         local currentOffsetY = ZO_WorldMapContainer:GetTop()
         local parentOffsetX = ZO_WorldMap:GetLeft()
@@ -282,6 +282,22 @@ function Esohead:UpdateCoordinates()
     else
         EsoheadCoordinates:SetAlpha(0)
     end
+end
+
+-----------------------------------------
+--          Native API Hooks           --
+-----------------------------------------
+
+local N_GetPOIMapInfo = GetPOIMapInfo
+
+function GetPOIMapInfo(zoneIndex, poiIndex)
+    local xLoc, zLoc, iconType, icon = N_GetPOIMapInfo(zoneIndex, poiIndex)
+
+    if icon == "/esoui/art/icons/icon_missing.dds" then
+        icon = "/esoui/art/icons/alchemy/crafting_alchemy_trait_stun.dds"
+        iconType = 14    end
+
+    return xLoc, zLoc, iconType, icon
 end
 
 -----------------------------------------
