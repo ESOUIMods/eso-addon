@@ -285,22 +285,6 @@ function Esohead:UpdateCoordinates()
 end
 
 -----------------------------------------
---          Native API Hooks           --
------------------------------------------
-
-local N_GetPOIMapInfo = GetPOIMapInfo
-
-function GetPOIMapInfo(zoneIndex, poiIndex)
-    local xLoc, zLoc, iconType, icon = N_GetPOIMapInfo(zoneIndex, poiIndex)
-
-    if icon == "/esoui/art/icons/icon_missing.dds" then
-        icon = "/esoui/art/icons/alchemy/crafting_alchemy_trait_stun.dds"
-        iconType = 14    end
-
-    return xLoc, zLoc, iconType, icon
-end
-
------------------------------------------
 --            API Helpers              --
 -----------------------------------------
 
@@ -476,6 +460,10 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
 
         Esohead:Debug("---")
     end
+end
+
+SLASH_COMMANDS["/rl"] = function(txt)
+    ReloadUI("ingame")
 end
 
 -----------------------------------------
