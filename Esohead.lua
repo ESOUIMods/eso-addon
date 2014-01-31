@@ -11,7 +11,7 @@ Esohead = ZO_CallbackObject:Subclass()
 
 local savedVars = {}
 local savedVarsVersion = 1
-local debugDefault = 1
+local debugDefault = 0
 local currentTarget
 
 -----------------------------------------
@@ -41,6 +41,7 @@ function Esohead:Initialize()
         ["vendor"]       = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", savedVarsVersion, "vendor", dataDefault),
         ["interactable"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", savedVarsVersion, "interactable", dataDefault),
         ["rune"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", savedVarsVersion, "rune", dataDefault),
+        ["quest"]        = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", savedVarsVersion, "quest", dataDefault),
     }
 
     if savedVars["internal"].debug == 1 then
@@ -256,12 +257,29 @@ function Esohead:OnUpdate()
 end
 
 -----------------------------------------
+--           Quest Tracking            --
+-----------------------------------------
+
+local function OnQuestAdded(_, questIndex)
+    local questName = GetJournalQuestInfo(questIndex)
+    local name = Esohead:GetUnitName("interact")
+    local x, y, a, subzone, world = Esohead:GetUnitPosition("interact")
+    local level = GetJournalQuestLevel(questIndex)
+
+    local targetType = "quest"
+
+    if Esohead:LogCheck(targetType, {subzone, questName}, x, y) then
+        Esohead:Log(targetType, {subzone, questName}, x, y, level, name)
+    end
+end
+
+-----------------------------------------
 --         Coordinate System           --
 -----------------------------------------
 
 function Esohead:UpdateCoordinates()
 
-    local mouseOverControl = WINDOW_MANAGER:GetMouseOverControl();
+    local mouseOverControl = WINDOW_MANAGER:GetMouseOverControl()
 
     if (mouseOverControl == ZO_WorldMapContainer or mouseOverControl:GetParent() == ZO_WorldMapContainer) then
         local currentOffsetX = ZO_WorldMapContainer:GetLeft()
@@ -272,8 +290,8 @@ function Esohead:UpdateCoordinates()
         local mapWidth, mapHeight = ZO_WorldMapContainer:GetDimensions()
         local parentWidth, parentHeight = ZO_WorldMap:GetDimensions()
 
-        local normalizedX = math.floor((((mouseX - currentOffsetX) / mapWidth) * 100) + 0.5);
-        local normalizedY = math.floor((((mouseY - currentOffsetY) / mapHeight) * 100) + 0.5);
+        local normalizedX = math.floor((((mouseX - currentOffsetX) / mapWidth) * 100) + 0.5)
+        local normalizedY = math.floor((((mouseY - currentOffsetY) / mapHeight) * 100) + 0.5)
 
         EsoheadCoordinates:SetAlpha(0.8)
         EsoheadCoordinates:SetDrawLayer(ZO_WorldMap:GetDrawLayer() + 1)
@@ -433,6 +451,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
             ["book"] = 0,
             ["vendor"] = 0,
             ["rune"] = 0,
+            ["quest"] = 0,
         }
 
         for type,sv in pairs(savedVars) do
@@ -457,6 +476,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
         Esohead:Debug("Lootable Nodes: "   .. Esohead:NumberFormat(counter["interactable"]))
         Esohead:Debug("Fishing Pools: "    .. Esohead:NumberFormat(counter["fish"]))
         Esohead:Debug("Runes: "            .. Esohead:NumberFormat(counter["rune"]))
+        Esohead:Debug("Quests: "           .. Esohead:NumberFormat(counter["quest"]))
 
         Esohead:Debug("---")
     end
@@ -476,4 +496,5 @@ local function OnAddOnLoaded(eventCode, addOnName)
     end
 end
 
+EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_QUEST_ADDED, OnQuestAdded)
 EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_ADD_ON_LOADED, OnAddOnLoaded)
