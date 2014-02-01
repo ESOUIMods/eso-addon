@@ -262,8 +262,9 @@ end
 
 local function OnQuestAdded(_, questIndex)
     local questName = GetJournalQuestInfo(questIndex)
-    local name = Esohead:GetUnitName("interact")
-    local x, y, a, subzone, world = Esohead:GetUnitPosition("interact")
+    local action, name, interactionBlocked, additionalInfo, context = GetGameCameraInteractableActionInfo()
+    local x, y, a, subzone, world = Esohead:GetUnitPosition("player")
+
     local level = GetJournalQuestLevel(questIndex)
 
     local targetType = "quest"
