@@ -155,15 +155,6 @@ function Esohead:OnUpdate()
                 end
             end
 
-        -- Lootable
-        elseif action == GetString(SI_GAMECAMERAACTIONTYPE1) then
-            currentTarget = name
-            targetType = "interactable"
-
-            if GetUnitType("reticleover") ~= 2 and self:LogCheck(targetType, {subzone, name}, x, y) then
-                self:Log(targetType, {subzone, name}, x, y)
-            end
-
         -- Harvesting
         elseif active and type == INTERACTION_HARVEST then
             currentTarget = name
@@ -188,15 +179,6 @@ function Esohead:OnUpdate()
                 if self:LogCheck(targetType, {subzone, GetString("SI_LOCKQUALITY", lockQuality)}, x, y) then
                     self:Log(targetType, {subzone, GetString("SI_LOCKQUALITY", lockQuality)}, x, y)
                 end
-            end
-
-        -- Lore/Skill Books
-        elseif active and type == INTERACTION_BOOK then
-            currentTarget = name
-            targetType = "book"
-
-            if self:LogCheck(targetType, {subzone, name}, x, y) then
-                self:Log(targetType, {subzone, name}, x, y)
             end
 
         -- Fishing Nodes
@@ -253,6 +235,28 @@ function Esohead:OnUpdate()
         if targetType ~= nil then
             self:FireCallbacks("ESOHEAD_EVENT_TARGET_CHANGED", targetType, name, x, y)
         end
+    end
+end
+
+-----------------------------------------
+--        Loot Tracking (NYI)          --
+-----------------------------------------
+
+local function OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundCategory, lootType, lootedBySelf)
+
+end
+
+-----------------------------------------
+--         Lore Book Tracking          --
+-----------------------------------------
+
+local function OnShowBook(eventCode, title, body, medium, showTitle)
+    local x, y, a, subzone, world = Esohead:GetUnitPosition("player")
+
+    local targetType = "book"
+
+    if Esohead:LogCheck(targetType, {subzone, title}, x, y) then
+        Esohead:Log(targetType, {subzone, title}, x, y)
     end
 end
 
@@ -497,5 +501,7 @@ local function OnAddOnLoaded(eventCode, addOnName)
     end
 end
 
+EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_LOOT_RECEIVED, OnLootReceived)
+EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_SHOW_BOOK, OnShowBook)
 EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_QUEST_ADDED, OnQuestAdded)
 EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_ADD_ON_LOADED, OnAddOnLoaded)
