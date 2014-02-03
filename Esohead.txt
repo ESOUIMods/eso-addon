@@ -5,4 +5,5 @@
 ## SavedVariables: Esohead_SavedVariables
 
 Esohead.lua
+EsoheadConstants.lua
 Esohead.xml

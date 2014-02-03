@@ -2,13 +2,13 @@
     <Controls>
         <TopLevelControl name="EsoheadUi">
             <OnUpdate>
-                Esohead:OnUpdate()
+                EH.OnUpdate()
             </OnUpdate>
         </TopLevelControl>
 
         <TopLevelControl name="EsoheadCoordinates">
             <OnUpdate>
-                Esohead:UpdateCoordinates()
+                EH.UpdateCoordinates()
             </OnUpdate>
 
             <Controls>
