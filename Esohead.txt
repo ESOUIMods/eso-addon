@@ -1,6 +1,6 @@
 ## Title: Esohead Looter
 ## Author: ZAM Network
-## Version: 0.0.5
+## Version: 0.1.1
 ## APIVersion: 100000
 ## SavedVariables: Esohead_SavedVariables
 
