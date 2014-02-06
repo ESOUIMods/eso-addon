@@ -10,7 +10,7 @@
 EH = {}
 
 EH.savedVars = {}
-EH.savedVarsVersion = 1
+EH.savedVarsVersion = 3
 EH.debugDefault = 0
 EH.dataDefault = {
     data = {}
@@ -351,6 +351,10 @@ function EH.OnLootUpdated(eventCode)
     local name, targetType, actionName = GetLootTargetInfo()
     local x, y, a, subzone, world = EH.GetUnitPosition("player")
 
+    if not IsPlayerInteractingWithObject() then
+        return
+    end
+
     local numLootItems = GetNumLootItems()
     for i = 1, numLootItems do
         local lootId, itemName, icon, count, quality, value, isQuest = GetLootItemInfo(i)
@@ -359,8 +363,8 @@ function EH.OnLootUpdated(eventCode)
         if link.type == "item" then
             local material = EH.GetTradeskillByMaterial(link.id)
             if material then
-                if EH.LogCheck("harvest", {subzone, material, link.id}, x, y) then
-                    EH.Log("harvest", {subzone, material, link.id}, x, y, count, name)
+                if EH.LogCheck("harvest", {subzone, material}, x, y) then
+                    EH.Log("harvest", {subzone, material}, x, y, count, name, link.id)
                 end
             end
         end
