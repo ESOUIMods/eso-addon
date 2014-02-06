@@ -10,7 +10,6 @@
 EH = {}
 
 EH.savedVars = {}
-EH.savedVarsVersion = 3
 EH.debugDefault = 0
 EH.dataDefault = {
     data = {}
@@ -30,15 +29,15 @@ EH.currentConversation = {
 
 function EH.InitSavedVariables()
     EH.savedVars = {
-        ["internal"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", EH.savedVarsVersion, "internal", { debug = EH.debugDefault }),
-        ["skyshard"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", EH.savedVarsVersion, "skyshard", EH.dataDefault),
-        ["book"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", EH.savedVarsVersion, "book", EH.dataDefault),
-        ["harvest"]  = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", EH.savedVarsVersion, "harvest", EH.dataDefault),
-        ["chest"]    = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", EH.savedVarsVersion, "chest", EH.dataDefault),
-        ["fish"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", EH.savedVarsVersion, "fish", EH.dataDefault),
-        ["npc"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", EH.savedVarsVersion, "npc", EH.dataDefault),
-        ["vendor"]   = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", EH.savedVarsVersion, "vendor", EH.dataDefault),
-        ["quest"]    = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", EH.savedVarsVersion, "quest", EH.dataDefault),
+        ["internal"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 1, "internal", { debug = EH.debugDefault }),
+        ["skyshard"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "skyshard", EH.dataDefault),
+        ["book"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "book", EH.dataDefault),
+        ["harvest"]  = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "harvest", EH.dataDefault),
+        ["chest"]    = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "chest", EH.dataDefault),
+        ["fish"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "fish", EH.dataDefault),
+        ["npc"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "npc", EH.dataDefault),
+        ["vendor"]   = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "vendor", EH.dataDefault),
+        ["quest"]    = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "quest", EH.dataDefault),
     }
 
     if EH.savedVars["internal"].debug == 1 then
