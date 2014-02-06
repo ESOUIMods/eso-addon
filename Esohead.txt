@@ -1,4 +1,4 @@
-## Title: Esohead Looter
+## Title: Esohead
 ## Author: ZAM Network
 ## Version: 0.1.2
 ## APIVersion: 100000
