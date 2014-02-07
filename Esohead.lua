@@ -110,7 +110,7 @@ function EH.LogCheck(type, nodes, x, y)
     for i = 1, #sv do
         local item = sv[i]
 
-        if math.abs(item[1] - x) < 0.01 and math.abs(item[2] - y) < 0.01 then
+        if math.abs(item[1] - x) < 0.005 and math.abs(item[2] - y) < 0.005 then
             log = false
         end
     end
@@ -137,7 +137,12 @@ end
 function EH.OnUpdate()
     local action, name, interactionBlocked, additionalInfo, context = GetGameCameraInteractableActionInfo()
 
-    if action == nil or name == nil or name == "" or name == EH.currentTarget then
+    if name == nil then
+        EH.currentTarget = ""
+        return
+    end
+
+    if action == nil or name == "" or name == EH.currentTarget then
         return
     end
 
