@@ -29,15 +29,16 @@ EH.currentConversation = {
 
 function EH.InitSavedVariables()
     EH.savedVars = {
-        ["internal"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 1, "internal", { debug = EH.debugDefault }),
-        ["skyshard"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "skyshard", EH.dataDefault),
-        ["book"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "book", EH.dataDefault),
-        ["harvest"]  = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "harvest", EH.dataDefault),
-        ["chest"]    = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "chest", EH.dataDefault),
-        ["fish"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "fish", EH.dataDefault),
-        ["npc"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "npc", EH.dataDefault),
-        ["vendor"]   = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "vendor", EH.dataDefault),
-        ["quest"]    = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "quest", EH.dataDefault),
+        ["internal"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 1, "internal", { debug = EH.debugDefault }),
+        ["skyshard"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "skyshard", EH.dataDefault),
+        ["book"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "book", EH.dataDefault),
+        ["harvest"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 3, "harvest", EH.dataDefault),
+        ["provisioning"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 3, "provisioning", EH.dataDefault),
+        ["chest"]        = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "chest", EH.dataDefault),
+        ["fish"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "fish", EH.dataDefault),
+        ["npc"]          = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "npc", EH.dataDefault),
+        ["vendor"]       = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "vendor", EH.dataDefault),
+        ["quest"]        = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "quest", EH.dataDefault),
     }
 
     if EH.savedVars["internal"].debug == 1 then
@@ -347,10 +348,11 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
 end
 
 function EH.OnLootUpdated(eventCode)
+    local action = GetGameCameraInteractableActionInfo()
     local name, targetType, actionName = GetLootTargetInfo()
     local x, y, a, subzone, world = EH.GetUnitPosition("player")
 
-    if not IsPlayerInteractingWithObject() then
+    if not IsPlayerInteractingWithObject() and action ~= "Search" then
         return
     end
 
@@ -361,7 +363,16 @@ function EH.OnLootUpdated(eventCode)
 
         if link.type == "item" then
             local material = EH.GetTradeskillByMaterial(link.id)
-            if material then
+
+            if not material then
+                return
+            end
+
+            if material == 5 then
+                if EH.LogCheck("provisioning", {subzone, material, link.id}, x, y) then
+                    EH.Log("provisioning", {subzone, material, link.id}, x, y, count, name)
+                end
+            else
                 if EH.LogCheck("harvest", {subzone, material}, x, y) then
                     EH.Log("harvest", {subzone, material}, x, y, count, name, link.id)
                 end
@@ -497,6 +508,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
             ["skyshard"] = 0,
             ["npc"] = 0,
             ["harvest"] = 0,
+            ["provisioning"] = 0,
             ["chest"] = 0,
             ["fish"] = 0,
             ["book"] = 0,
@@ -509,7 +521,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
                 for zone, t1 in pairs(EH.savedVars[type].data) do
                     counter[type] = counter[type] + #EH.savedVars[type].data[zone]
                 end
-            elseif type ~= "internal" and type == "harvest" then
+            elseif type ~= "internal" and type == "provisioning" then
                 for zone, t1 in pairs(EH.savedVars[type].data) do
                     for item, t2 in pairs(EH.savedVars[type].data[zone]) do
                         for data, t3 in pairs(EH.savedVars[type].data[zone][item]) do
@@ -530,6 +542,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
         EH.Debug("Monster/NPCs: "     .. EH.NumberFormat(counter["npc"]))
         EH.Debug("Lore/Skill Books: " .. EH.NumberFormat(counter["book"]))
         EH.Debug("Harvest: "          .. EH.NumberFormat(counter["harvest"]))
+        EH.Debug("Provisioning: "     .. EH.NumberFormat(counter["harvest"]))
         EH.Debug("Treasure Chests: "  .. EH.NumberFormat(counter["skyshard"]))
         EH.Debug("Fishing Pools: "    .. EH.NumberFormat(counter["fish"]))
         EH.Debug("Quests: "           .. EH.NumberFormat(counter["quest"]))
