@@ -146,6 +146,8 @@ function EH.OnUpdate()
         return
     end
 
+    EH.currentTarget = name
+
     local type = GetInteractionType()
     local active = IsPlayerInteractingWithObject()
     local x, y, a, subzone, world = EH.GetUnitPosition("player")
@@ -153,7 +155,6 @@ function EH.OnUpdate()
 
     -- Skyshard
     if type == INTERACTION_NONE and action == GetString(SI_GAMECAMERAACTIONTYPE5) then
-        EH.currentTarget = name
         targetType = "skyshard"
 
         if name == "Skyshard" then
@@ -164,7 +165,6 @@ function EH.OnUpdate()
 
     -- Chest
     elseif type == INTERACTION_NONE and action == GetString(SI_GAMECAMERAACTIONTYPE12) then
-        EH.currentTarget = name
         targetType = "chest"
 
         if EH.LogCheck(targetType, {subzone}, x, y) then
@@ -173,7 +173,6 @@ function EH.OnUpdate()
 
     -- Fishing Nodes
     elseif action == GetString(SI_GAMECAMERAACTIONTYPE16) then
-        EH.currentTarget = name
         targetType = "fish"
 
         if EH.LogCheck(targetType, {subzone}, x, y) then
@@ -182,7 +181,6 @@ function EH.OnUpdate()
 
     -- NPC Vendor
     elseif active and type == INTERACTION_VENDOR then
-        EH.currentTarget = name
         targetType = "vendor"
 
         local storeItems = {}
@@ -353,9 +351,17 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
 end
 
 function EH.OnLootUpdated(eventCode)
-    local action = GetGameCameraInteractableActionInfo()
+    local action, targetName = GetGameCameraInteractableActionInfo()
     local name, targetType, actionName = GetLootTargetInfo()
     local x, y, a, subzone, world = EH.GetUnitPosition("player")
+
+    if EH.currentTarget ~= "" then
+        targetName = EH.currentTarget
+    end
+
+    if targetName == nil then
+        return
+    end
 
     if not IsPlayerInteractingWithObject() and targetType ~= 5 then
         return
@@ -375,11 +381,11 @@ function EH.OnLootUpdated(eventCode)
 
             if material == 5 and targetType == 5 then
                 if EH.LogCheck("provisioning", {subzone, material, link.id}, x, y) then
-                    EH.Log("provisioning", {subzone, material, link.id}, x, y, count, name)
+                    EH.Log("provisioning", {subzone, material, link.id}, x, y, count, targetName)
                 end
             else
                 if EH.LogCheck("harvest", {subzone, material}, x, y) then
-                    EH.Log("harvest", {subzone, material}, x, y, count, name, link.id)
+                    EH.Log("harvest", {subzone, material}, x, y, count, targetName, link.id)
                 end
             end
         end
@@ -410,6 +416,10 @@ function EH.OnQuestAdded(_, questIndex)
 
     local targetType = "quest"
 
+    if EH.currentConversation.npcName == "" or EH.currentConversation.npcName == nil then
+        return
+    end
+
     if EH.LogCheck(targetType, {EH.currentConversation.subzone, questName}, EH.currentConversation.x, EH.currentConversation.y) then
         EH.Log(
             targetType,
@@ -431,11 +441,10 @@ end
 -----------------------------------------
 
 function EH.OnChatterBegin()
-    local action, name, interactionBlocked, additionalInfo, context = GetGameCameraInteractableActionInfo()
     local x, y, a, subzone, world = EH.GetUnitPosition("player")
     local npcLevel = EH.GetUnitLevel("interact")
 
-    EH.currentConversation.npcName = name
+    EH.currentConversation.npcName = EH.currentTarget
     EH.currentConversation.npcLevel = npcLevel
     EH.currentConversation.x = x
     EH.currentConversation.y = y
