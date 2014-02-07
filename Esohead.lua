@@ -32,8 +32,8 @@ function EH.InitSavedVariables()
         ["internal"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 1, "internal", { debug = EH.debugDefault }),
         ["skyshard"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "skyshard", EH.dataDefault),
         ["book"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "book", EH.dataDefault),
-        ["harvest"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 3, "harvest", EH.dataDefault),
-        ["provisioning"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 3, "provisioning", EH.dataDefault),
+        ["harvest"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 4, "harvest", EH.dataDefault),
+        ["provisioning"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 4, "provisioning", EH.dataDefault),
         ["chest"]        = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "chest", EH.dataDefault),
         ["fish"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "fish", EH.dataDefault),
         ["npc"]          = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "npc", EH.dataDefault),
@@ -352,7 +352,7 @@ function EH.OnLootUpdated(eventCode)
     local name, targetType, actionName = GetLootTargetInfo()
     local x, y, a, subzone, world = EH.GetUnitPosition("player")
 
-    if not IsPlayerInteractingWithObject() and action ~= "Search" then
+    if not IsPlayerInteractingWithObject() and targetType ~= 5 then
         return
     end
 
@@ -368,7 +368,7 @@ function EH.OnLootUpdated(eventCode)
                 return
             end
 
-            if material == 5 then
+            if targetType == 5 then
                 if EH.LogCheck("provisioning", {subzone, material, link.id}, x, y) then
                     EH.Log("provisioning", {subzone, material, link.id}, x, y, count, name)
                 end
