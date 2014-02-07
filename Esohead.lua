@@ -368,7 +368,7 @@ function EH.OnLootUpdated(eventCode)
                 return
             end
 
-            if targetType == 5 then
+            if material == 5 and targetType == 5 then
                 if EH.LogCheck("provisioning", {subzone, material, link.id}, x, y) then
                     EH.Log("provisioning", {subzone, material, link.id}, x, y, count, name)
                 end
