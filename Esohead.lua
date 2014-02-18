@@ -1,8 +1,7 @@
 -----------------------------------------
 --                                     --
---     E s o h e a d   L o o t e r     --
+--            E s o h e a d            --
 --                                     --
---    Patch: eso.live.1.0.0.708405     --
 --    E-mail: feedback@esohead.com     --
 --                                     --
 -----------------------------------------
@@ -15,6 +14,7 @@ EH.dataDefault = {
     data = {}
 }
 EH.currentTarget = ""
+EH.lastTarget = ""
 EH.currentConversation = {
     npcName = "",
     npcLevel = 0,
@@ -135,7 +135,15 @@ end
 
 -- Listens for anything that is not event driven by the API but needs to be tracked
 function EH.OnUpdate()
+    if IsGameCameraUIModeActive() then
+        return
+    end
+
     local action, name, interactionBlocked, additionalInfo, context = GetGameCameraInteractableActionInfo()
+
+    if name ~= nil and not IsPlayerInteractingWithObject() then
+        EH.lastTarget = name
+    end
 
     if name == nil then
         EH.currentTarget = ""
@@ -347,46 +355,28 @@ function EH.ItemLinkParse(link)
 end
 
 function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundCategory, lootType, lootedBySelf)
+    if not IsGameCameraUIModeActive() then
+        targetName = EH.lastTarget
 
-end
+        if not EH.IsValidNode(targetName) then
+            return
+        end
 
-function EH.OnLootUpdated(eventCode)
-    local action, targetName = GetGameCameraInteractableActionInfo()
-    local name, targetType, actionName = GetLootTargetInfo()
-    local x, y, a, subzone, world = EH.GetUnitPosition("player")
+        local link = EH.ItemLinkParse(objectName)
+        local material = EH.GetTradeskillByMaterial(link.id)
+        local x, y, a, subzone, world = EH.GetUnitPosition("player")
 
-    if EH.currentTarget ~= "" then
-        targetName = EH.currentTarget
-    end
+        if not material then
+            return
+        end
 
-    if targetName == nil then
-        return
-    end
-
-    if not IsPlayerInteractingWithObject() and targetType ~= 5 then
-        return
-    end
-
-    local numLootItems = GetNumLootItems()
-    for i = 1, numLootItems do
-        local lootId, itemName, icon, count, quality, value, isQuest = GetLootItemInfo(i)
-        local link = EH.ItemLinkParse(GetLootItemLink(lootId))
-
-        if link.type == "item" then
-            local material = EH.GetTradeskillByMaterial(link.id)
-
-            if not material then
-                return
+        if material == 5 then
+            if EH.LogCheck("provisioning", {subzone, material, link.id}, x, y) then
+                EH.Log("provisioning", {subzone, material, link.id}, x, y, stackCount, targetName)
             end
-
-            if material == 5 and targetType == 5 then
-                if EH.LogCheck("provisioning", {subzone, material, link.id}, x, y) then
-                    EH.Log("provisioning", {subzone, material, link.id}, x, y, count, targetName)
-                end
-            else
-                if EH.LogCheck("harvest", {subzone, material}, x, y) then
-                    EH.Log("harvest", {subzone, material}, x, y, count, targetName, link.id)
-                end
+        else
+            if EH.LogCheck("harvest", {subzone, material}, x, y) then
+                EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
             end
         end
     end
@@ -588,7 +578,7 @@ function EH.OnLoad(eventCode, addOnName)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_CHATTER_BEGIN, EH.OnChatterBegin)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_SHOW_BOOK, EH.OnShowBook)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_QUEST_ADDED, EH.OnQuestAdded)
-    EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_LOOT_UPDATED, EH.OnLootUpdated)
+    EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_LOOT_RECEIVED, EH.OnLootReceived)
 end
 
 EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_ADD_ON_LOADED, EH.OnLoad)
