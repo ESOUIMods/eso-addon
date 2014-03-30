@@ -1,3 +1,9 @@
+##0.1.6
+
+Bugfixes
+- Fixed a bug where a coordinates would be recorded on the wrong map if the player navigates away from the current map. Bug #23 by Shinni, ref: http://www.esoui.com/portal.php?id=1&a=viewbug&bugid=23
+- Increased API version to 100003 to resolve out of date issues.
+
 ##0.1.5
 
 Bugfixes
