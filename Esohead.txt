@@ -1,6 +1,6 @@
 ## Title: Esohead
 ## Author: ZAM Network
-## Version: 0.1.6
+## Version: 0.1.7
 ## APIVersion: 100003
 ## SavedVariables: Esohead_SavedVariables
 
