@@ -1,3 +1,8 @@
+##0.1.7
+
+Bugfixes
+- Map callbacks were being fired way more than necessary from a fix in 0.1.6, causing FPS drops whenever a reticle hovers over a loggable object. This has been addressed to fire only when it should.
+
 ##0.1.6
 
 Bugfixes

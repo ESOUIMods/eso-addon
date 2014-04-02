@@ -256,8 +256,10 @@ end
 -----------------------------------------
 
 function EH.GetUnitPosition(tag)
-    SetMapToPlayerLocation() -- Fix for bug #23
-    CALLBACK_MANAGER:FireCallbacks("OnWorldMapChanged") -- Fix for bug #23
+    local setMap = SetMapToPlayerLocation() -- Fix for bug #23
+    if setMap == 2 then
+        CALLBACK_MANAGER:FireCallbacks("OnWorldMapChanged") -- Fix for bug #23
+    end
 
     local x, y, a = GetMapPlayerPosition(tag)
     local subzone = GetMapName()
