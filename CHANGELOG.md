@@ -1,3 +1,8 @@
+##0.1.8
+
+Bugfixes
+- Sharlikran pull request	Changed Node Name Case and Added "Kresh Weed", "Pure Water", "Silver Weed"
+
 ##0.1.7
 
 Bugfixes
