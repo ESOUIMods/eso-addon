@@ -578,6 +578,8 @@ function EH.OnLoad(eventCode, addOnName)
         return
     end
 
+    EH.language = (GetCVar("language.2") or "en")
+
     EH.InitSavedVariables()
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_RETICLE_TARGET_CHANGED, EH.OnTargetChange)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_CHATTER_BEGIN, EH.OnChatterBegin)
