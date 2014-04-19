@@ -1,3 +1,15 @@
+##0.1.9
+
+Bugfixes
+- Sharlikran pull request: Added "Heavy Scak"
+
+Features
+- Added localization for German and French.  While German only needs a few translations the French localization needs many updates.  Any help would be appreciated.
+
+Credits:
+- German Localization: KinqxsYrox
+- French Localization: jillorval, Kalmeth, and wookiefrag
+
 ##0.1.8
 
 Bugfixes
