@@ -1,7 +1,7 @@
 ##0.1.9
 
 Bugfixes
-- Sharlikran pull request: Added "Heavy Scak"
+- Sharlikran pull request: Added "Heavy Scak" and changed "Kresh Weed" and "Silver Weed" to "Kreshweed" and "Silverweed"
 
 Features
 - Added localization for German and French.  While German only needs a few translations the French localization needs many updates.  Any help would be appreciated.
