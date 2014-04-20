@@ -368,7 +368,8 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
         local x, y, a, subzone, world = EH.GetUnitPosition("player")
 
         if not EH.IsValidNode(targetName) then
-            EH.Debug("TargetName : " .. targetName .. " : ItemNumber : " .. link.id .. " was found to be an invalid node."
+            EH.Debug("TargetName : " .. targetName .. " : ItemNumber : " .. link.id .. " was not found in EsoheadConstants.lua.")
+            EH.Debug("Please report this in the Esohead forum.  Thank you.")
             return
         end
         
