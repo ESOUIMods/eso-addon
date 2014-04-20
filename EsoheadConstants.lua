@@ -333,6 +333,7 @@ EH.validNodes = {
         "Nightwood",
         "Nirnroot",
         "Oak",
+        "Orichalc Ore", -- Needs Verification
         "Orichalcum Ore",
         "Pot",
         "Potency Rune",
@@ -436,7 +437,8 @@ EH.validNodes = {
         "Nachtholz",
         "Nirnwurz",
         "Eiche",
-        "Oreichalkoserz",
+        "Orichalc Ore", -- Needs Verification
+        "Oreichalkoserz", -- Orichalcum Ore
         "Topf",
         "Machtrune",
         "Produkt",
@@ -539,7 +541,8 @@ EH.validNodes = {
         "Nightwood",
         "Nirnrave",
         "Chêne",
-        "Minerai D'orichalque",
+        "Orichalc Ore", -- Needs Verification
+        "Minerai D'orichalque",  -- Orichalcum Ore
         "Pot",
         "Rune de Puissance",
         "Produce",

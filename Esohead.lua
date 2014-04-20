@@ -363,14 +363,15 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
     if not IsGameCameraUIModeActive() then
         targetName = EH.lastTarget
 
-        if not EH.IsValidNode(targetName) then
-            return
-        end
-
         local link = EH.ItemLinkParse(objectName)
         local material = EH.GetTradeskillByMaterial(link.id)
         local x, y, a, subzone, world = EH.GetUnitPosition("player")
 
+        if not EH.IsValidNode(targetName) then
+            EH.Debug("TargetName : " .. targetName .. " : ItemNumber : " .. link.id .. " was found to be an invalid node."
+            return
+        end
+        
         if not material then
             return
         end
