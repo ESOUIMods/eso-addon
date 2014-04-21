@@ -9,7 +9,7 @@ Features
 
 Credits:
 - German Localization: KinqxsYrox, and Rathputin
-- French Localization: jillorval, Kalmeth, and wookiefrag
+- French Localization: Deadlock, jillorval, Kalmeth, and wookiefrag
 
 ##0.1.8
 
