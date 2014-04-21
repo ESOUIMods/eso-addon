@@ -336,9 +336,9 @@ end
 -----------------------------------------
 
 function EH.ItemLinkParse(link)
-    
+
     local Field1, Field2, Field3, Field4, Field5 = ZO_LinkHandler_ParseLink( link )
-    
+
     -- name = Field1
     -- unused = Field2
     -- type = Field3
@@ -357,11 +357,14 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
     if not IsGameCameraUIModeActive() then
         targetName = EH.lastTarget
 
+        local link = EH.ItemLinkParse(objectName)
+
         if not EH.IsValidNode(targetName) then
+            EH.Debug("TargetName : " .. targetName .. " : ItemNumber : " .. link.id .. " was not found in EsoheadConstants.lua.")
+            EH.Debug("Please report this in the Esohead forum.  Thank you.")
             return
         end
 
-        local link = EH.ItemLinkParse(objectName)
         local material = ( EH.GetTradeskillByMaterial(link.id) or 0)
         local x, y, a, subzone, world = EH.GetUnitPosition("player")
 
