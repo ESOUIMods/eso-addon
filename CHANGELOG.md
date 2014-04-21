@@ -7,7 +7,7 @@ Features
 - Added localization for German and French.  While German only needs a few translations the French localization needs many updates.  Any help would be appreciated.
 
 Credits:
-- German Localization: KinqxsYrox
+- German Localization: KinqxsYrox, and Rathputin
 - French Localization: jillorval, Kalmeth, and wookiefrag
 
 ##0.1.8
