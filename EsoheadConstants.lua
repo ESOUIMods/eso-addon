@@ -589,7 +589,7 @@ end
 
 function EH.IsValidNode(name)
     for k, v in pairs(EH.validNodes[EH.language]) do
-        if v == name then
+        if string.lower(v) == string.lower(name) then
             return true
         end
     end
