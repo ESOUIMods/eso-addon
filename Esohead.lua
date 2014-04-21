@@ -360,8 +360,10 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
         local link = EH.ItemLinkParse(objectName)
 
         if not EH.IsValidNode(targetName) then
+                if EH.savedVars["internal"].debug == 1 then
             EH.Debug("TargetName : " .. targetName .. ", contained : " .. link.name .. ", ItemNumber : " .. link.id .. ", was not found in EsoheadConstants.lua.")
             EH.Debug("Please report this in the Esohead forum.  Thank you.")
+                end
             return
         end
 
