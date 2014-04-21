@@ -5,6 +5,7 @@ Bugfixes
 
 Features
 - Added localization for German and French.  While German only needs a few translations the French localization needs many updates.  Any help would be appreciated.
+- Added debug message for harvesting Nodes that do not exist in EsoheadConstants.lua.  It should only fire when you are harvesting.
 
 Credits:
 - German Localization: KinqxsYrox, and Rathputin
