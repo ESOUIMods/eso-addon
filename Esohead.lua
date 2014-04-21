@@ -349,7 +349,7 @@ function EH.ItemLinkParse(link)
         type = Field3,
         id = tonumber(Field4),
         quality = tonumber(Field5),
-        name = Field1
+        name = zo_strformat(SI_TOOLTIP_ITEM_NAME, Field1)
     }
 end
 
