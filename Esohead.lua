@@ -359,11 +359,13 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
 
         local link = EH.ItemLinkParse(objectName)
 
-            if (IsPlayerInteractingWithObject() and (GetInteractionType() == INTERACTION_HARVEST)) and (not EH.IsValidNode(targetName) ) then
+        if not EH.IsValidNode(targetName) then
+            if GetInteractionType() == INTERACTION_HARVEST then
                 if EH.savedVars["internal"].debug == 1 then
-            EH.Debug("TargetName : " .. targetName .. ", contained : " .. link.name .. ", ItemNumber : " .. link.id .. ", was not found in EsoheadConstants.lua.")
-            EH.Debug("Please report this in the Esohead forum.  Thank you.")
+                    EH.Debug("TargetName : " .. targetName .. ", contained : " .. link.name .. ", ItemNumber : " .. link.id .. ", was not found in EsoheadConstants.lua.")
+                    EH.Debug("Please report this in the Esohead forum.  Thank you.")
                 end
+            end
             return
         end
 
