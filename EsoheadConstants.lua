@@ -467,10 +467,11 @@ EH.validNodes = {
         "Wermut",
         "Eibenholz",
     },
+    -- Pot, Jute, Jar, Hickory, Grain, Cabinet and Entoloma are the same names in French
     ["fr"] = {
         "Frêne",
         "Rune d'Aspect",
-        "Sac ŕ dos",
+        "Sac à dos",
         "Tonneau",
         "Tonneau (brûlé)",
         "Tonneaux",
@@ -545,7 +546,7 @@ EH.validNodes = {
         "Minerai D'orichalque",  -- Orichalcum Ore
         "Pot",
         "Rune de Puissance",
-        "Produce",
+        "Céréales",
         "Eau Pure",
         "QA Clickable",
         "QA Clickable Apples",
