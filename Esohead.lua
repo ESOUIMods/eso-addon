@@ -8,6 +8,8 @@
 
 EH = {}
 
+function EH.Initialize()
+
 EH.savedVars = {}
 EH.debugDefault = 0
 EH.dataDefault = {
@@ -22,6 +24,8 @@ EH.currentConversation = {
     y = 0,
     subzone = ""
 }
+
+end
 
 -----------------------------------------
 --           Core Functions            --
@@ -150,13 +154,19 @@ function EH.OnUpdate()
         return
     end
 
+    local type = GetInteractionType()
+
     if action == nil or name == "" or name == EH.currentTarget then
+        if type == INTERACTION_HARVEST then
+            EH.isHarvesting = true
+        else
+            EH.isHarvesting = false
+        end
         return
     end
 
     EH.currentTarget = name
 
-    local type = GetInteractionType()
     local active = IsPlayerInteractingWithObject()
     local x, y, a, subzone, world = EH.GetUnitPosition("player")
     local targetType
@@ -360,7 +370,7 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
         local link = EH.ItemLinkParse(objectName)
 
         if not EH.IsValidNode(targetName) then
-            if GetInteractionType() == INTERACTION_HARVEST then
+            if EH.isHarvesting then
                 if EH.savedVars["internal"].debug == 1 then
                     EH.Debug("TargetName : " .. targetName .. ", contained : " .. link.name .. ", ItemNumber : " .. link.id .. ", was not found in EsoheadConstants.lua.")
                     EH.Debug("Please report this in the Esohead forum.  Thank you.")
@@ -589,4 +599,9 @@ function EH.OnLoad(eventCode, addOnName)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_LOOT_RECEIVED, EH.OnLootReceived)
 end
 
-EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_ADD_ON_LOADED, EH.OnLoad)
+EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_ADD_ON_LOADED, function (eventCode, addOnName)
+    if addOnName == "Esohead" then
+        EH.Initialize()
+        EH.OnLoad(eventCode, addOnName)
+	end
+end)
