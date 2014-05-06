@@ -371,7 +371,7 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
             return
         end
 
-         -- If the player is Harvesting, material will not be 0 and name should
+         -- If the player is Harvesting material will not be 0 but name should
          -- not be used because of localization.  By using the name players
          -- don't record valid harvesting nodes.  When the player is not
          -- Harvesting then use the targetName.  Exit if the targetName
@@ -382,11 +382,12 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
             if not EH.IsValidNode(targetName) then
                 return
             end 
-            -- The player is not Harvesting and the name was valid so it
-            -- should not go under harvest.  Set material to 5 to prevent
-            -- it from being recorded under "harvest".
+            -- The player is not Harvesting and the name was valid but it
+            -- should not go under harvest because the player was not 
+            -- harvesting. Set material to 5 to prevent it from being recorded
+            -- under "harvest".
             -- It will be a Wine Rack, Bottle, Crates, Barrels, all of which
-            -- give random items.  The random item might be valid for 
+            -- give a random items.  The random item might be valid for 
             -- professions other then provisioning but there is no guarantee.
             material = 5
         end
