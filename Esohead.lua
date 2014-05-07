@@ -391,7 +391,7 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
             -- harvesting. Set material to 5 to prevent it from being recorded
             -- under "harvest".
             -- It will be a Wine Rack, Bottle, Crates, Barrels, all of which
-            -- give a random items.  The random item might be valid for 
+            -- give random items.  The random item might be valid for 
             -- professions other then provisioning but there is no guarantee.
             material = 5
         end
