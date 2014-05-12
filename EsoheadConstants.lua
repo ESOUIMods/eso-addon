@@ -280,7 +280,7 @@ EH.validNodes = {
         "Bread",
         "Bugloss",
         "Cabinet",
-        "Calcinium ore",
+        "Calcinium Ore", -- Verified
         "Carrots",
         "Cheese",
         "Columbine",
