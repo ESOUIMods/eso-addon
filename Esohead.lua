@@ -8,6 +8,8 @@
 
 EH = {}
 
+function EH.Initialize()
+
 EH.savedVars = {}
 EH.debugDefault = 0
 EH.dataDefault = {
@@ -22,6 +24,8 @@ EH.currentConversation = {
     y = 0,
     subzone = ""
 }
+
+end
 
 -----------------------------------------
 --           Core Functions            --
@@ -150,13 +154,19 @@ function EH.OnUpdate()
         return
     end
 
+    local type = GetInteractionType()
+
     if action == nil or name == "" or name == EH.currentTarget then
+        if type == INTERACTION_HARVEST then
+            EH.isHarvesting = true
+        else
+            EH.isHarvesting = false
+        end
         return
     end
 
     EH.currentTarget = name
 
-    local type = GetInteractionType()
     local active = IsPlayerInteractingWithObject()
     local x, y, a, subzone, world = EH.GetUnitPosition("player")
     local targetType
@@ -336,26 +346,20 @@ end
 -----------------------------------------
 
 function EH.ItemLinkParse(link)
-    local matches = {}
-    i = 1
 
-    for match in string.gmatch(link, ":(%w+)") do
-        matches[i] = match
-        i = i + 1
-    end
+    local Field1, Field2, Field3, Field4, Field5 = ZO_LinkHandler_ParseLink( link )
 
-    if #matches < 20 then
-        return {
-            type = false,
-            id = false,
-            quality = false
-        }
-    end
+    -- name = Field1
+    -- unused = Field2
+    -- type = Field3
+    -- id = Field4
+    -- quality = Field5
 
     return {
-        type = matches[1],
-        id = tonumber(matches[2]),
-        quality = matches[3]
+        type = Field3,
+        id = tonumber(Field4),
+        quality = tonumber(Field5),
+        name = zo_strformat(SI_TOOLTIP_ITEM_NAME, Field1)
     }
 end
 
@@ -363,16 +367,33 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
     if not IsGameCameraUIModeActive() then
         targetName = EH.lastTarget
 
-        if not EH.IsValidNode(targetName) then
+        local link = EH.ItemLinkParse(objectName)
+        local material = ( EH.GetTradeskillByMaterial(link.id) or 0)
+        local x, y, a, subzone, world = EH.GetUnitPosition("player")
+
+        if material == 0 then
             return
         end
 
-        local link = EH.ItemLinkParse(objectName)
-        local material = EH.GetTradeskillByMaterial(link.id)
-        local x, y, a, subzone, world = EH.GetUnitPosition("player")
-
-        if not material then
-            return
+         -- If the player is Harvesting material will not be 0 but name should
+         -- not be used because of localization.  By using the name players
+         -- don't record valid harvesting nodes.  When the player is not
+         -- Harvesting then use the targetName.  Exit if the targetName
+         -- is invalid.  Check for valid harvesting node Name is no longer needed.
+         -- However, valid provisioning nodes may still be accidentally ignored
+         -- because of localization.
+        if not EH.isHarvesting then --<< Not Harvesting
+            if not EH.IsValidNode(targetName) then
+                return
+            end 
+            -- The player is not Harvesting and the name was valid but it
+            -- should not go under harvest because the player was not 
+            -- harvesting. Set material to 5 to prevent it from being recorded
+            -- under "harvest".
+            -- It will be a Wine Rack, Bottle, Crates, Barrels, all of which
+            -- give random items.  The random item might be valid for 
+            -- professions other then provisioning but there is no guarantee.
+            material = 5
         end
 
         if material == 5 then
@@ -578,6 +599,8 @@ function EH.OnLoad(eventCode, addOnName)
         return
     end
 
+    EH.language = (GetCVar("language.2") or "en")
+
     EH.InitSavedVariables()
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_RETICLE_TARGET_CHANGED, EH.OnTargetChange)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_CHATTER_BEGIN, EH.OnChatterBegin)
@@ -586,4 +609,9 @@ function EH.OnLoad(eventCode, addOnName)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_LOOT_RECEIVED, EH.OnLootReceived)
 end
 
-EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_ADD_ON_LOADED, EH.OnLoad)
+EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_ADD_ON_LOADED, function (eventCode, addOnName)
+    if addOnName == "Esohead" then
+        EH.Initialize()
+        EH.OnLoad(eventCode, addOnName)
+	end
+end)

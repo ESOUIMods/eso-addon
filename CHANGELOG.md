@@ -1,3 +1,16 @@
+##0.1.9
+
+Bugfixes
+- Sharlikran pull request: Added "Heavy Scak" and changed "Kresh Weed" and "Silver Weed" to "Kreshweed" and "Silverweed"
+
+Features
+- Added localization for German and French.  While German only needs a few translations the French localization needs many updates.  Any help would be appreciated.
+- Added debug message for harvesting Nodes that do not exist in EsoheadConstants.lua.  It should only fire when you are harvesting.
+
+Credits:
+- German Localization: KinqxsYrox, and Rathputin
+- French Localization: Deadlock, jillorval, Kalmeth, and wookiefrag
+
 ##0.1.8
 
 Bugfixes
