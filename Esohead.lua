@@ -8,28 +8,26 @@
 
 EH = {}
 
-function EH.Initialize()
-
-EH.savedVars = {}
-EH.debugDefault = 0
-EH.dataDefault = {
-    data = {}
-}
-EH.currentTarget = ""
-EH.lastTarget = ""
-EH.currentConversation = {
-    npcName = "",
-    npcLevel = 0,
-    x = 0,
-    y = 0,
-    subzone = ""
-}
-
-end
-
 -----------------------------------------
 --           Core Functions            --
 -----------------------------------------
+
+function EH.Initialize()
+    EH.savedVars = {}
+    EH.debugDefault = 0
+    EH.dataDefault = {
+        data = {}
+    }
+    EH.currentTarget = ""
+    EH.lastTarget = ""
+    EH.currentConversation = {
+        npcName = "",
+        npcLevel = 0,
+        x = 0,
+        y = 0,
+        subzone = ""
+    }
+end
 
 function EH.InitSavedVariables()
     EH.savedVars = {
@@ -66,10 +64,13 @@ function EH.Log(type, nodes, ...)
     end
 
     for i = 1, #nodes do
-        if sv[nodes[i]] == nil then
-            sv[nodes[i]] = {}
+        local node = nodes[i];
+        node = string.gsub(node, "\"", "\\\"");
+
+        if sv[node] == nil then
+            sv[node] = {}
         end
-        sv = sv[nodes[i]]
+        sv = sv[node]
     end
 
     for i = 1, select("#", ...) do
@@ -105,10 +106,13 @@ function EH.LogCheck(type, nodes, x, y)
     end
 
     for i = 1, #nodes do
-        if sv[nodes[i]] == nil then
-            sv[nodes[i]] = {}
+        local node = nodes[i];
+        node = string.gsub(node, "\"", "\\\"");
+
+        if sv[node] == nil then
+            sv[node] = {}
         end
-        sv = sv[nodes[i]]
+        sv = sv[node]
     end
 
     for i = 1, #sv do
@@ -342,7 +346,7 @@ function EH.Debug(...)
 end
 
 -----------------------------------------
---        Loot Tracking (NYI)          --
+--           Loot Tracking             --
 -----------------------------------------
 
 function EH.ItemLinkParse(link)
@@ -487,7 +491,7 @@ function EH.OnTargetChange(eventCode)
 
         local level = EH.GetUnitLevel(tag)
 
-        if EH.LogCheck("npc", {subzone, name}, x, y) then
+        if EH.LogCheck("npc", {subzone, name }, x, y) then
             EH.Log("npc", {subzone, name}, x, y, level)
         end
     end

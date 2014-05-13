@@ -1,7 +1,13 @@
+##0.1.10
+
+Bugfixes
+- Data logged with double quotes in the name are now escaped properly, this addresses many lua errors users were experiencing.
+- Sharlikran PR#4: Various fixes with harvest / provisioning loot accuracy
+
 ##0.1.9
 
 Bugfixes
-- Sharlikran pull request: Added "Heavy Scak" and changed "Kresh Weed" and "Silver Weed" to "Kreshweed" and "Silverweed"
+- Sharlikran PR#4: Added "Heavy Scak" and changed "Kresh Weed" and "Silver Weed" to "Kreshweed" and "Silverweed"
 
 Features
 - Added localization for German and French.  While German only needs a few translations the French localization needs many updates.  Any help would be appreciated.
@@ -14,7 +20,7 @@ Credits:
 ##0.1.8
 
 Bugfixes
-- Sharlikran pull request	Changed Node Name Case and Added "Kresh Weed", "Pure Water", "Silver Weed"
+- Sharlikran PR: Changed Node Name Case and Added "Kresh Weed", "Pure Water", "Silver Weed"
 
 ##0.1.7
 
