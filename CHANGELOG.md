@@ -3,6 +3,7 @@
 Bugfixes
 - Data logged with double quotes in the name are now escaped properly, this addresses many lua errors users were experiencing.
 - Sharlikran PR#4: Various fixes with harvest / provisioning loot accuracy
+- Removed debug message for harvesting Nodes that do not exist in EsoheadConstants.lua, it is no longer needed.
 
 ##0.1.9
 
