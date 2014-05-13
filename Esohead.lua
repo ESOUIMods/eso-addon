@@ -33,7 +33,7 @@ end
 
 function EH.InitSavedVariables()
     EH.savedVars = {
-        ["internal"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 1, "internal", { debug = EH.debugDefault }),
+        ["internal"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 1, "internal", { debug = EH.debugDefault, language = "" }),
         ["skyshard"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "skyshard", EH.dataDefault),
         ["book"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "book", EH.dataDefault),
         ["harvest"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 4, "harvest", EH.dataDefault),
@@ -600,8 +600,9 @@ function EH.OnLoad(eventCode, addOnName)
     end
 
     EH.language = (GetCVar("language.2") or "en")
-
     EH.InitSavedVariables()
+    EH.savedVars["internal"]["language"] = EH.language
+
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_RETICLE_TARGET_CHANGED, EH.OnTargetChange)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_CHATTER_BEGIN, EH.OnChatterBegin)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_SHOW_BOOK, EH.OnShowBook)
