@@ -668,7 +668,6 @@ function EH.GetTradeskillByMaterial(id)
             end
         end
     end
-    EH.Debug("Profession  Returned : " .. profession .. ", for id : " .. id)
     return profession
 end
 
@@ -685,7 +684,6 @@ end
 function EH.IsValidContainer(name)
     for k, v in pairs(EH.validContainer[EH.language]) do
         if string.lower(v) == string.lower(name) then
-            EH.Debug("Container Matched : " .. name)
             return true
         end
     end
