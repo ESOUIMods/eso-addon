@@ -34,8 +34,8 @@ function EH.InitSavedVariables()
         ["internal"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 1, "internal", { debug = EH.debugDefault, language = "" }),
         ["skyshard"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "skyshard", EH.dataDefault),
         ["book"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "book", EH.dataDefault),
-        ["harvest"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 4, "harvest", EH.dataDefault),
-        ["provisioning"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 4, "provisioning", EH.dataDefault),
+        ["harvest"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 5, "harvest", EH.dataDefault),
+        ["provisioning"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 5, "provisioning", EH.dataDefault),
         ["chest"]        = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "chest", EH.dataDefault),
         ["fish"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "fish", EH.dataDefault),
         ["npc"]          = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "npc", EH.dataDefault),
@@ -92,15 +92,11 @@ end
 
 -- Checks if we already have an entry for the object/npc within a certain x/y distance
 function EH.LogCheck(type, nodes, x, y)
-    local log = true
+    local log = nil
     local sv
 
-    if x <= 0 or y <= 0 then
-        return false
-    end
-
     if EH.savedVars[type] == nil or EH.savedVars[type].data == nil then
-        return true
+        return nil
     else
         sv = EH.savedVars[type].data
     end
@@ -119,7 +115,7 @@ function EH.LogCheck(type, nodes, x, y)
         local item = sv[i]
 
         if math.abs(item[1] - x) < 0.005 and math.abs(item[2] - y) < 0.005 then
-            log = false
+            log = item
         end
     end
 
@@ -180,7 +176,8 @@ function EH.OnUpdate()
         targetType = "skyshard"
 
         if name == "Skyshard" then
-            if EH.LogCheck(targetType, {subzone}, x, y) then
+            data = EH.LogCheck(targetType, {subzone}, x, y)
+            if not data then --when there is no node at the given location, save a new entry
                 EH.Log(targetType, {subzone}, x, y)
             end
         end
@@ -189,7 +186,8 @@ function EH.OnUpdate()
     elseif type == INTERACTION_NONE and action == GetString(SI_GAMECAMERAACTIONTYPE12) then
         targetType = "chest"
 
-        if EH.LogCheck(targetType, {subzone}, x, y) then
+        data = EH.LogCheck(targetType, {subzone}, x, y)
+        if not data then --when there is no node at the given location, save a new entry
             EH.Log(targetType, {subzone}, x, y)
         end
 
@@ -197,7 +195,8 @@ function EH.OnUpdate()
     elseif action == GetString(SI_GAMECAMERAACTIONTYPE16) then
         targetType = "fish"
 
-        if EH.LogCheck(targetType, {subzone}, x, y) then
+        data = EH.LogCheck(targetType, {subzone}, x, y)
+        if not data then --when there is no node at the given location, save a new entry
             EH.Log(targetType, {subzone}, x, y)
         end
 
@@ -207,7 +206,9 @@ function EH.OnUpdate()
 
         local storeItems = {}
 
-        if EH.LogCheck(targetType, {subzone, name}, x, y) then
+
+        data = EH.LogCheck(targetType, {subzone, name}, x, y)
+        if not data then --when there is no node at the given location, save a new entry
             for entryIndex = 1, GetNumStoreItems() do
                 local icon, name, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyId1, currencyQuantity1, currencyIcon1,
                 currencyName1, currencyType2, currencyId2, currencyQuantity2, currencyIcon2, currencyName2 = GetStoreEntryInfo(entryIndex)
@@ -400,13 +401,20 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
             material = 5
         end
 
+        material = tonumber(material)
         if material == 5 then
-            if EH.LogCheck("provisioning", {subzone, material, link.id}, x, y) then
-                EH.Log("provisioning", {subzone, material, link.id}, x, y, stackCount, targetName)
+            data = EH.LogCheck("provisioning", { subzone, material }, x, y)
+            if not data then --when there is no harvest node at the given location, save a new entry
+                EH.Log("provisioning", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
+            else --otherwise add the new data to the entry
+                table.insert(data[4], {link.name, link.id, stackCount} )
             end
         else
-            if EH.LogCheck("harvest", {subzone, material}, x, y) then
-                EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
+            data = EH.LogCheck("harvest", { subzone, material }, x, y)
+            if not data then --when there is no harvest node at the given location, save a new entry
+                EH.Log("harvest", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
+            else --otherwise add the new data to the entry
+                table.insert(data[4], {link.name, link.id, stackCount} )
             end
         end
     end
@@ -421,7 +429,8 @@ function EH.OnShowBook(eventCode, title, body, medium, showTitle)
 
     local targetType = "book"
 
-    if EH.LogCheck(targetType, {subzone, title}, x, y) then
+    data = EH.LogCheck(targetType, {subzone, title}, x, y)
+    if not data then --when there is no harvest node at the given location, save a new entry
         EH.Log(targetType, {subzone, title}, x, y)
     end
 end
@@ -440,7 +449,8 @@ function EH.OnQuestAdded(_, questIndex)
         return
     end
 
-    if EH.LogCheck(targetType, {EH.currentConversation.subzone, questName}, EH.currentConversation.x, EH.currentConversation.y) then
+    data = EH.LogCheck(targetType, {EH.currentConversation.subzone, questName}, EH.currentConversation.x, EH.currentConversation.y)
+    if not data then --when there is no harvest node at the given location, save a new entry
         EH.Log(
             targetType,
             {
@@ -491,7 +501,8 @@ function EH.OnTargetChange(eventCode)
 
         local level = EH.GetUnitLevel(tag)
 
-        if EH.LogCheck("npc", {subzone, name }, x, y) then
+    data = EH.LogCheck("npc", {subzone, name }, x, y)
+    if not data then --when there is no harvest node at the given location, save a new entry
             EH.Log("npc", {subzone, name}, x, y, level)
         end
     end
