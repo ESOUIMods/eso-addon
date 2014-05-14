@@ -366,6 +366,10 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
     if not IsGameCameraUIModeActive() then
         targetName = EH.lastTarget
 
+        if not EH.IsValidNode(targetName) then
+            return
+        end
+        
         local link = EH.ItemLinkParse(objectName)
         local material = EH.GetTradeskillByMaterial(link.id)
         local x, y, a, subzone, world = EH.GetUnitPosition("player")
@@ -374,43 +378,15 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
             return
         end
 
-        if not EH.IsValidNode(targetName) then
-            return
-        end
-
-        -- If the player is Harvesting material will not be 0 but name should
-        -- not be used because of localization.  By using the name players
-        -- don't record valid harvesting nodes.  When the player is not
-        -- Harvesting then use the targetName.  Exit if the targetName
-        -- is invalid.  Check for valid harvesting node Name is no longer needed.
-        -- However, valid provisioning nodes may still be accidentally ignored
-        -- because of localization.
-        -- if not EH.isHarvesting then --<< Not Harvesting
-        --     if not EH.IsValidNode(targetName) then
-        --         return
-        --     end
-            -- The player is not Harvesting and the name was valid but it
-            -- should not go under harvest because the player was not
-            -- harvesting. Set material to 5 to prevent it from being recorded
-            -- under "harvest".
-            -- It will be a Wine Rack, Bottle, Crates, Barrels, all of which
-            -- give random items.  The random item might be valid for
-            -- professions other then provisioning but there is no guarantee.
-        --     material = 5
-        -- end
-
         -- Because of the way OnUpdate works checking for Harvesting was not
         -- reliable.  I didn't want to add this but for now I feel it's needed
         -- until there is a better way to keep alchemy reagents, specifically
         -- Solvents out of "harvest" when the player is interacting with a Crate
         -- or Barrel, basically a Container.
-        EH.Debug("Material Before : " .. material)
         if EH.IsValidContainer(targetName) then
             material = 5
         end
-        EH.Debug("Material After : " .. material)
 
-        -- material = tonumber(material)
         if material == 5 then
             data = EH.LogCheck("provisioning", { subzone, material }, x, y)
             if not data then --when there is no harvest node at the given location, save a new entry
