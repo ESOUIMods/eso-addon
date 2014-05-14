@@ -158,19 +158,13 @@ function EH.OnUpdate()
         return
     end
 
-    local type = GetInteractionType()
-
     if action == nil or name == "" or name == EH.currentTarget then
-        if type == INTERACTION_HARVEST then
-            EH.isHarvesting = true
-        else
-            EH.isHarvesting = false
-        end
         return
     end
 
     EH.currentTarget = name
 
+    local type = GetInteractionType()
     local active = IsPlayerInteractingWithObject()
     local x, y, a, subzone, world = EH.GetUnitPosition("player")
     local targetType
@@ -372,31 +366,44 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
         targetName = EH.lastTarget
 
         local link = EH.ItemLinkParse(objectName)
-        local material = ( EH.GetTradeskillByMaterial(link.id) or 0)
+        local material = EH.GetTradeskillByMaterial(link.id)
         local x, y, a, subzone, world = EH.GetUnitPosition("player")
 
         if material == 0 then
             return
         end
 
-         -- If the player is Harvesting material will not be 0 but name should
-         -- not be used because of localization.  By using the name players
-         -- don't record valid harvesting nodes.  When the player is not
-         -- Harvesting then use the targetName.  Exit if the targetName
-         -- is invalid.  Check for valid harvesting node Name is no longer needed.
-         -- However, valid provisioning nodes may still be accidentally ignored
-         -- because of localization.
-        if not EH.isHarvesting then --<< Not Harvesting
-            if not EH.IsValidNode(targetName) then
-                return
-            end 
+        if not EH.IsValidNode(targetName) then
+            return
+        end
+
+        -- If the player is Harvesting material will not be 0 but name should
+        -- not be used because of localization.  By using the name players
+        -- don't record valid harvesting nodes.  When the player is not
+        -- Harvesting then use the targetName.  Exit if the targetName
+        -- is invalid.  Check for valid harvesting node Name is no longer needed.
+        -- However, valid provisioning nodes may still be accidentally ignored
+        -- because of localization.
+        -- if not EH.isHarvesting then --<< Not Harvesting
+        --     if not EH.IsValidNode(targetName) then
+        --         return
+        --     end
             -- The player is not Harvesting and the name was valid but it
-            -- should not go under harvest because the player was not 
+            -- should not go under harvest because the player was not
             -- harvesting. Set material to 5 to prevent it from being recorded
             -- under "harvest".
             -- It will be a Wine Rack, Bottle, Crates, Barrels, all of which
-            -- give random items.  The random item might be valid for 
+            -- give random items.  The random item might be valid for
             -- professions other then provisioning but there is no guarantee.
+        --     material = 5
+        -- end
+
+        -- Because of the way OnUpdate works checking for Harvesting was not
+        -- reliable.  I didn't want to add this but for now I feel it's needed
+        -- until there is a better way to keep alchemy reagents, specifically
+        -- Solvents out of "harvest" when the player is interacting with a Crate
+        -- or Barrel, basically a Container.
+        if EH.IsValidContainer(targetName) then
             material = 5
         end
 
@@ -618,5 +625,5 @@ EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_ADD_ON_LOADED, function (eventCo
     if addOnName == "Esohead" then
         EH.Initialize()
         EH.OnLoad(eventCode, addOnName)
-	end
+    end
 end)

@@ -171,7 +171,7 @@ EH.rawMaterials = {
         28603,
         28604,
         28605,
-        28606,
+        -- 28606, This is Plump Worms
         28607,
         28608,
         28609,
@@ -255,6 +255,85 @@ EH.rawMaterials = {
         23119,
         23137,
         23138,
+    },
+}
+
+-- Containers
+EH.validContainer = {
+    ["en"] = {
+        "Backpack",
+        "Barrel",
+        "Barrel (Burnt)",
+        "Barrels",
+        "Barrels (Burnt)",
+        "Basket",
+        "Cabinet",
+        "Crate",
+        "Crate (Burnt)",
+        "Crates",
+        "Crates (Burnt)",
+        "Cupboard",
+        "Desk",
+        "Dresser",
+        "Heavy Sack",
+        "Nightstand",
+        "Pot",
+        "Sack",
+        "Tomb Urn",
+        "Trunk",
+        "Urn",
+        "Vase",
+        "Wardrobe",
+    },
+    ["de"] = {
+        "Rucksack",
+        "Fass",
+        "Fass (versengt)",
+        "Fässer",
+        "Fässer (versengt)",
+        "Korb",
+        "Schrank",
+        "Kiste",
+        "Kiste (versengt)",
+        "Kisten",
+        "Kisten (versengt)",
+        "Schrank",
+        "Schreibtisch",
+        "Kommode",
+        "Schwerer Sack",
+        "Nachttisch",
+        "Topf",
+        "Sack",
+        "Urnengrab",
+        "Truhe",
+        "Urne",
+        "Vase",
+        "Kleiderschrank",
+    },
+    ["fr"] = {
+        "Sac ŕ dos",
+        "Tonneau",
+        "Tonneau (brûlé)",
+        "Tonneaux",
+        "Tonneaux (brûlés)",
+        "Panier",
+        "Cabinet",
+        "Caisse",
+        "Caisse (brûlée)",
+        "Caisses",
+        "Caisses (brûlées)",
+        "Commode",
+        "Bureau",
+        "Table de chevet",
+        "Sac Lourd",
+        "Table de chevet",
+        "Pot",
+        "Sac",
+        "Urne tombale",
+        "Coffre",
+        "Urne",
+        "Vase",
+        "Garde-robe",
     },
 }
 
@@ -577,23 +656,36 @@ EH.validNodes = {
     }
 }
 
-
 function EH.GetTradeskillByMaterial(id)
     id = tonumber(id)
+    local profession = 0
 
     for tsId, tsData in pairs(EH.rawMaterials) do
         for key, value in pairs(tsData) do
             if value == id then
-                return tsId
+                profession = tsId
+                return profession
             end
         end
     end
-    return false
+    EH.Debug("Profession  Returned : " .. profession .. ", for id : " .. id)
+    return profession
 end
 
 function EH.IsValidNode(name)
     for k, v in pairs(EH.validNodes[EH.language]) do
         if string.lower(v) == string.lower(name) then
+            return true
+        end
+    end
+
+    return false
+end
+
+function EH.IsValidContainer(name)
+    for k, v in pairs(EH.validContainer[EH.language]) do
+        if string.lower(v) == string.lower(name) then
+            EH.Debug("Container Matched : " .. name)
             return true
         end
     end
