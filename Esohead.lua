@@ -76,7 +76,7 @@ function EH.Log(type, nodes, ...)
     for i = 1, #nodes do
         local node = nodes[i];
         if string.find(node, "\"", 1, true) == nil then
-            node = string.gsub(node, "\"", "\\\"");
+            node = string.gsub(node, "\"", "\\\"")
         end
 
         if sv[node] == nil then
