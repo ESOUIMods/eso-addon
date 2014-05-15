@@ -25,6 +25,7 @@ function EH.Initialize()
 
     -- {{added}}
     EH.name = ""
+    EH.time = 0
     EH.isHarvesting = false
     EH.action = ""
     -- {{added}}
@@ -165,6 +166,7 @@ function EH.OnUpdate(time)
     -- {{added}}
     local isHarvesting = ( active and (type == INTERACTION_HARVEST) )
     if not isHarvesting then
+        -- d("I am NOT busy! Time : " .. time)
         if name then
             EH.name = name -- EH.name is the global current node
         end
@@ -203,43 +205,10 @@ function EH.OnUpdate(time)
                     EH.Log(targetType, {subzone}, x, y)
                 end
 
-            -- NPC Vendor
-            elseif active and type == INTERACTION_VENDOR then
-                targetType = "vendor"
-
-                local storeItems = {}
-
-                if EH.LogCheck(targetType, {subzone, name}, x, y) then
-                    for entryIndex = 1, GetNumStoreItems() do
-                        local icon, name, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyId1, currencyQuantity1, currencyIcon1,
-                        currencyName1, currencyType2, currencyId2, currencyQuantity2, currencyIcon2, currencyName2 = GetStoreEntryInfo(entryIndex)
-
-                        if(stack > 0) then
-                            local itemData =
-                            {
-                                name,
-                                stack,
-                                price,
-                                quality,
-                                questNameColor,
-                                currencyType1,
-                                currencyQuantity1,
-                                currencyType2,
-                                currencyQuantity2,
-                                { GetStoreEntryTypeInfo(entryIndex) },
-                                GetStoreEntryStatValue(entryIndex),
-                            }
-
-                            storeItems[#storeItems + 1] = itemData
-                        end
-                    end
-
-                    EH.Log(targetType, {subzone, name}, x, y, storeItems)
-                end
             end
         end -- End of {{if action ~= EH.action then}}
     else -- End of {{if not isHarvesting then}}
-        -- d("I am REALLY busy!")
+        -- d("I am REALLY busy! Time : " .. time)
         EH.isHarvesting = true
         EH.time = time
 
@@ -430,6 +399,46 @@ function EH.OnShowBook(eventCode, title, body, medium, showTitle)
 end
 
 -----------------------------------------
+--          Vendor Tracking            --
+-----------------------------------------
+
+function EH.VendorOpened()
+    local x, y, a, subzone, world = EH.GetUnitPosition("player")
+
+    targetType = "vendor"
+
+    local storeItems = {}
+
+    if EH.LogCheck(targetType, {subzone, EH.name}, x, y) then
+        for entryIndex = 1, GetNumStoreItems() do
+            local icon, name, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyId1, currencyQuantity1, currencyIcon1,
+            currencyName1, currencyType2, currencyId2, currencyQuantity2, currencyIcon2, currencyName2 = GetStoreEntryInfo(entryIndex)
+
+            if(stack > 0) then
+            local itemData =
+            {
+                name,
+                stack,
+                price,
+                quality,
+                questNameColor,
+                currencyType1,
+                currencyQuantity1,
+                currencyType2,
+                currencyQuantity2,
+                { GetStoreEntryTypeInfo(entryIndex) },
+                GetStoreEntryStatValue(entryIndex),
+                }
+
+                storeItems[#storeItems + 1] = itemData
+            end
+        end
+
+        EH.Log(targetType, {subzone, EH.name}, x, y, storeItems)
+    end
+end
+
+-----------------------------------------
 --           Quest Tracking            --
 -----------------------------------------
 
@@ -615,6 +624,8 @@ function EH.OnLoad(eventCode, addOnName)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_SHOW_BOOK, EH.OnShowBook)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_QUEST_ADDED, EH.OnQuestAdded)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_LOOT_RECEIVED, EH.OnLootReceived)
+    -- {{added}}
+    EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_OPEN_STORE, EH.VendorOpened)
 end
 
 EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_ADD_ON_LOADED, function (eventCode, addOnName)
