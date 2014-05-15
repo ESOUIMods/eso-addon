@@ -402,7 +402,7 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
                 EH.Log("provisioning", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
             else --otherwise add the new data to the entry
                 if data[3] == targetName then
-                    if EH.CheckDupeContents(data[4], link.name) then
+                    if not EH.CheckDupeContents(data[4], link.name) then
                         table.insert(data[4], {link.name, link.id, stackCount} )
                     end
                 else
@@ -415,7 +415,7 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
                 EH.Log("harvest", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
             else --otherwise add the new data to the entry
                 if data[3] == targetName then
-                    if EH.CheckDupeContents(data[4], link.name) then
+                    if not EH.CheckDupeContents(data[4], link.name) then
                         table.insert(data[4], {link.name, link.id, stackCount} )
                     end
                 else
