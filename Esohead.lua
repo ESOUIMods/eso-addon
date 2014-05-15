@@ -362,6 +362,15 @@ function EH.ItemLinkParse(link)
     }
 end
 
+function EH.CheckDupeContents(items, itemName)
+    for _, entry in pairs( items ) do
+        if entry[1] == itemName then
+            return true
+        end
+    end
+    return false
+end
+
 function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundCategory, lootType, lootedBySelf)
     if not IsGameCameraUIModeActive() then
         targetName = EH.lastTarget
@@ -393,7 +402,9 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
                 EH.Log("provisioning", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
             else --otherwise add the new data to the entry
                 if data[3] == targetName then
-                    table.insert(data[4], {link.name, link.id, stackCount} )
+                    if EH.CheckDupeContents(data[4], link.name) then
+                        table.insert(data[4], {link.name, link.id, stackCount} )
+                    end
                 else
                     EH.Log("provisioning", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
                 end
@@ -404,7 +415,9 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
                 EH.Log("harvest", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
             else --otherwise add the new data to the entry
                 if data[3] == targetName then
-                    table.insert(data[4], {link.name, link.id, stackCount} )
+                    if EH.CheckDupeContents(data[4], link.name) then
+                        table.insert(data[4], {link.name, link.id, stackCount} )
+                    end
                 else
                     EH.Log("harvest", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
                 end
