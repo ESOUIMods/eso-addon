@@ -405,7 +405,7 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
         end
 
         if material == 5 then
-            data = EH.LogCheck("provisioning", { subzone, material }, x, y, 0.0003)
+            data = EH.LogCheck("provisioning", { subzone, material }, x, y, 0.003)
             if not data then --when there is no harvest node at the given location, save a new entry
                 EH.Log("provisioning", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
             else --otherwise add the new data to the entry
@@ -419,7 +419,7 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
                 end
             end
         else
-            data = EH.LogCheck("harvest", { subzone, material }, x, y, 0.0003)
+            data = EH.LogCheck("harvest", { subzone, material }, x, y, 0.003)
             if not data then --when there is no harvest node at the given location, save a new entry
                 EH.Log("harvest", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
             else --otherwise add the new data to the entry
