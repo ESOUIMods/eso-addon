@@ -18,8 +18,17 @@ function EH.Initialize()
     EH.dataDefault = {
         data = {}
     }
-    EH.currentTarget = ""
-    EH.lastTarget = ""
+    -- {{altered}}
+    -- EH.currentTarget = ""
+    -- EH.lastTarget = ""
+    -- {{altered}}
+
+    -- {{added}}
+    EH.name = ""
+    EH.isHarvesting = false
+    EH.action = ""
+    -- {{added}}
+
     EH.currentConversation = {
         npcName = "",
         npcLevel = 0,
@@ -142,93 +151,101 @@ function EH.NumberFormat(num)
 end
 
 -- Listens for anything that is not event driven by the API but needs to be tracked
-function EH.OnUpdate()
-    if IsGameCameraUIModeActive() then
+function EH.OnUpdate(time)
+    if IsGameCameraUIModeActive() or IsUnitInCombat("player") then
         return
     end
-
-    local action, name, interactionBlocked, additionalInfo, context = GetGameCameraInteractableActionInfo()
-
-    if name ~= nil and not IsPlayerInteractingWithObject() then
-        EH.lastTarget = name
-    end
-
-    if name == nil then
-        EH.currentTarget = ""
-        return
-    end
-
-    if action == nil or name == "" or name == EH.currentTarget then
-        return
-    end
-
-    EH.currentTarget = name
 
     local type = GetInteractionType()
     local active = IsPlayerInteractingWithObject()
     local x, y, a, subzone, world = EH.GetUnitPosition("player")
     local targetType
+    local action, name, interactionBlocked, additionalInfo, context = GetGameCameraInteractableActionInfo()
 
-    -- Skyshard
-    if type == INTERACTION_NONE and action == GetString(SI_GAMECAMERAACTIONTYPE5) then
-        targetType = "skyshard"
-
-        if name == "Skyshard" then
-            if EH.LogCheck(targetType, {subzone}, x, y) then
-                EH.Log(targetType, {subzone}, x, y)
-            end
+    -- {{added}}
+    local isHarvesting = ( active and (type == INTERACTION_HARVEST) )
+    if not isHarvesting then
+        if name then
+            EH.name = name -- EH.name is the global current node
         end
 
-    -- Chest
-    elseif type == INTERACTION_NONE and action == GetString(SI_GAMECAMERAACTIONTYPE12) then
-        targetType = "chest"
-
-        if EH.LogCheck(targetType, {subzone}, x, y) then
-            EH.Log(targetType, {subzone}, x, y)
+        if EH.isHarvesting and time - EH.time > 1 then
+            EH.isHarvesting = false
         end
 
-    -- Fishing Nodes
-    elseif action == GetString(SI_GAMECAMERAACTIONTYPE16) then
-        targetType = "fish"
+        if action ~= EH.action then
+            EH.action = action -- EH.name is the global current action
 
-        if EH.LogCheck(targetType, {subzone}, x, y) then
-            EH.Log(targetType, {subzone}, x, y)
-        end
+            -- Check Reticle and Non Harvest Actions
+            -- Skyshard
+            if type == INTERACTION_NONE and EH.action == GetString(SI_GAMECAMERAACTIONTYPE5) then
+                targetType = "skyshard"
 
-    -- NPC Vendor
-    elseif active and type == INTERACTION_VENDOR then
-        targetType = "vendor"
+                if EH.name == "Skyshard" then
+                    if EH.LogCheck(targetType, {subzone}, x, y) then
+                        EH.Log(targetType, {subzone}, x, y)
+                    end
+                end
 
-        local storeItems = {}
+            -- Chest
+            elseif type == INTERACTION_NONE and EH.action == GetString(SI_GAMECAMERAACTIONTYPE12) then
+                targetType = "chest"
 
-        if EH.LogCheck(targetType, {subzone, name}, x, y) then
-            for entryIndex = 1, GetNumStoreItems() do
-                local icon, name, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyId1, currencyQuantity1, currencyIcon1,
-                currencyName1, currencyType2, currencyId2, currencyQuantity2, currencyIcon2, currencyName2 = GetStoreEntryInfo(entryIndex)
+                if EH.LogCheck(targetType, {subzone}, x, y) then
+                    EH.Log(targetType, {subzone}, x, y)
+                end
 
-                if(stack > 0) then
-                    local itemData =
-                    {
-                        name,
-                        stack,
-                        price,
-                        quality,
-                        questNameColor,
-                        currencyType1,
-                        currencyQuantity1,
-                        currencyType2,
-                        currencyQuantity2,
-                        { GetStoreEntryTypeInfo(entryIndex) },
-                        GetStoreEntryStatValue(entryIndex),
-                    }
+            -- Fishing Nodes
+            elseif EH.action == GetString(SI_GAMECAMERAACTIONTYPE16) then
+                targetType = "fish"
 
-                    storeItems[#storeItems + 1] = itemData
+                if EH.LogCheck(targetType, {subzone}, x, y) then
+                    EH.Log(targetType, {subzone}, x, y)
+                end
+
+            -- NPC Vendor
+            elseif active and type == INTERACTION_VENDOR then
+                targetType = "vendor"
+
+                local storeItems = {}
+
+                if EH.LogCheck(targetType, {subzone, name}, x, y) then
+                    for entryIndex = 1, GetNumStoreItems() do
+                        local icon, name, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyId1, currencyQuantity1, currencyIcon1,
+                        currencyName1, currencyType2, currencyId2, currencyQuantity2, currencyIcon2, currencyName2 = GetStoreEntryInfo(entryIndex)
+
+                        if(stack > 0) then
+                            local itemData =
+                            {
+                                name,
+                                stack,
+                                price,
+                                quality,
+                                questNameColor,
+                                currencyType1,
+                                currencyQuantity1,
+                                currencyType2,
+                                currencyQuantity2,
+                                { GetStoreEntryTypeInfo(entryIndex) },
+                                GetStoreEntryStatValue(entryIndex),
+                            }
+
+                            storeItems[#storeItems + 1] = itemData
+                        end
+                    end
+
+                    EH.Log(targetType, {subzone, name}, x, y, storeItems)
                 end
             end
+        end -- End of {{if action ~= EH.action then}}
+    else -- End of {{if not isHarvesting then}}
+        -- d("I am REALLY busy!")
+        EH.isHarvesting = true
+        EH.time = time
 
-            EH.Log(targetType, {subzone, name}, x, y, storeItems)
-        end
-    end
+    -- End of Else Block
+    end -- End of Else Block
+    -- {{added}}
 end
 
 -----------------------------------------
@@ -363,7 +380,7 @@ end
 
 function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundCategory, lootType, lootedBySelf)
     if not IsGameCameraUIModeActive() then
-        targetName = EH.lastTarget
+        targetName = EH.name
 
         if not EH.IsValidNode(targetName) then
             return
@@ -450,7 +467,7 @@ function EH.OnChatterBegin()
     local x, y, a, subzone, world = EH.GetUnitPosition("player")
     local npcLevel = EH.GetUnitLevel("interact")
 
-    EH.currentConversation.npcName = EH.currentTarget
+    EH.currentConversation.npcName = EH.name
     EH.currentConversation.npcLevel = npcLevel
     EH.currentConversation.x = x
     EH.currentConversation.y = y
