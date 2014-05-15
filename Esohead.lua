@@ -75,8 +75,8 @@ function EH.Log(type, nodes, ...)
 
     for i = 1, #nodes do
         local node = nodes[i];
-        if string.find(node, "\"", 1, true) == nil then
-            node = string.gsub(node, "\"", "\\\"");
+        if string.find(node, '"') then
+            node = string.gsub(node, '"', '\"')
         end
 
         if sv[node] == nil then
@@ -123,8 +123,8 @@ function EH.LogCheck(type, nodes, x, y, scale)
 
     for i = 1, #nodes do
         local node = nodes[i];
-        if string.find(node, "\"", 1, true) == nil then
-            node = string.gsub(node, "\"", "\\\"");
+        if string.find(node, '"') then
+            node = string.gsub(node, '"', '\"')
         end
 
         if sv[node] == nil then
@@ -386,7 +386,7 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
         -- such as bottles, crates, barrels, baskets, wine racks, and
         -- heavy sacks.  Some of those containers give random items but can
         -- also give solvents.  Heavy Sacks can contain Enchanting reagents.
-        if not EH.isHarvesting then
+        if not EH.isHarvesting and material >= 1 then
             material = 5
         elseif EH.isHarvesting and material == 5 then
             material = 0
