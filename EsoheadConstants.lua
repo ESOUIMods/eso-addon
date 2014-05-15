@@ -171,7 +171,7 @@ EH.rawMaterials = {
         28603,
         28604,
         28605,
-        -- 28606, This is Plump Worms
+        28606, -- This is Plump Worms and found in some alchemy nodes
         28607,
         28608,
         28609,
