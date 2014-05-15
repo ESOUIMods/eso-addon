@@ -176,7 +176,7 @@ function EH.OnUpdate(time)
         end
 
         if action ~= EH.action then
-            EH.action = action -- EH.name is the global current action
+            EH.action = action -- EH.action is the global current action
 
             -- Check Reticle and Non Harvest Actions
             -- Skyshard
@@ -359,17 +359,20 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
         local material = EH.GetTradeskillByMaterial(link.id)
         local x, y, a, subzone, world = EH.GetUnitPosition("player")
 
-        if material == 0 then
-            return
+        -- This attempts to resolve an issue where you can loot a harvesting
+        -- node that has worms or plump worms in it and it gets recorded.
+        -- It also attempts to resolve adding non harvest nodes to harvest
+        -- such as bottles, crates, barrels, baskets, wine racks, and
+        -- heavy sacks.  Some of those containers give random items but can
+        -- also give solvents.  Heavy Sacks can contain Enchanting reagents.
+        if not EH.isHarvesting then
+            material = 5
+        elseif EH.isHarvesting and material == 5 then
+            material = 0
         end
 
-        -- Because of the way OnUpdate works checking for Harvesting was not
-        -- reliable.  I didn't want to add this but for now I feel it's needed
-        -- until there is a better way to keep alchemy reagents, specifically
-        -- Solvents out of "harvest" when the player is interacting with a Crate
-        -- or Barrel, basically a Container.
-        if EH.IsValidContainer(targetName) then
-            material = 5
+        if material == 0 then
+            return
         end
 
         if material == 5 then
