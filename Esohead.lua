@@ -111,7 +111,7 @@ function EH.LogCheck(type, nodes, x, y, scale)
     else
         distance = scale
     end
-    
+
 
     if EH.savedVars[type] == nil or EH.savedVars[type].data == nil then
         return nil
@@ -180,7 +180,7 @@ function EH.OnUpdate(time)
         end
 
         if action ~= EH.action then
-            EH.action = action -- EH.name is the global current action
+            EH.action = action -- EH.action is the global current action
             -- if EH.action ~= nil then
             --     d("New Action! : " .. EH.action .. " : " .. time)
             -- end
@@ -376,17 +376,25 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
         local material = EH.GetTradeskillByMaterial(link.id)
         local x, y, a, subzone, world = EH.GetUnitPosition("player")
 
+        -- This attempts to resolve an issue where you can loot a harvesting
+        -- node that has worms or plump worms in it and it gets recorded.
+        -- It also attempts to resolve adding non harvest nodes to harvest
+        -- such as bottles, crates, barrels, baskets, wine racks, and
+        -- heavy sacks.  Some of those containers give random items but can
+        -- also give solvents.  Heavy Sacks can contain Enchanting reagents.
+        if not EH.isHarvesting then
+            material = 5
+        elseif EH.isHarvesting and material == 5 then
+            material = 0
+        end
+
         if material == 0 then
             return
         end
 
-        if not EH.isHarvesting then
-            material = 5
-        end
-
         if material == 5 then
             data = EH.LogCheck("provisioning", { subzone, material }, x, y, 0.003)
-            if not data then --when there is no harvest node at the given location, save a new entry
+            if not data then -- when there is no node at the given location, save a new entry
                 EH.Log("provisioning", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
             else --otherwise add the new data to the entry
                 if data[3] == targetName then
@@ -400,7 +408,7 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
             end
         else
             data = EH.LogCheck("harvest", { subzone, material }, x, y, 0.003)
-            if not data then --when there is no harvest node at the given location, save a new entry
+            if not data then -- when there is no node at the given location, save a new entry
                 EH.Log("harvest", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
             else --otherwise add the new data to the entry
                 if data[3] == targetName then
@@ -425,7 +433,7 @@ function EH.OnShowBook(eventCode, title, body, medium, showTitle)
     local targetType = "book"
 
     data = EH.LogCheck(targetType, {subzone, title}, x, y, nil)
-    if not data then --when there is no harvest node at the given location, save a new entry
+    if not data then -- when there is no node at the given location, save a new entry
         EH.Log(targetType, {subzone, title}, x, y)
     end
 end
@@ -441,8 +449,8 @@ function EH.VendorOpened()
 
     local storeItems = {}
 
-	data = EH.LogCheck(targetType, {subzone, EH.name}, x, y)
-    if not data then
+    data = EH.LogCheck(targetType, {subzone, EH.name}, x, y, nil)
+    if not data then -- when there is no node at the given location, save a new entry
         for entryIndex = 1, GetNumStoreItems() do
             local icon, name, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyId1, currencyQuantity1, currencyIcon1,
             currencyName1, currencyType2, currencyId2, currencyQuantity2, currencyIcon2, currencyName2 = GetStoreEntryInfo(entryIndex)
@@ -486,7 +494,7 @@ function EH.OnQuestAdded(_, questIndex)
     end
 
     data = EH.LogCheck(targetType, {EH.currentConversation.subzone, questName}, EH.currentConversation.x, EH.currentConversation.y, nil)
-    if not data then --when there is no harvest node at the given location, save a new entry
+    if not data then -- when there is no node at the given location, save a new entry
         EH.Log(
             targetType,
             {
@@ -538,7 +546,7 @@ function EH.OnTargetChange(eventCode)
         local level = EH.GetUnitLevel(tag)
 
     data = EH.LogCheck("npc", {subzone, name }, x, y, nil)
-    if not data then --when there is no harvest node at the given location, save a new entry
+    if not data then -- when there is no node at the given location, save a new entry
             EH.Log("npc", {subzone, name}, x, y, level)
         end
     end
