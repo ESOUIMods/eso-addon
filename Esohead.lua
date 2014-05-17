@@ -403,7 +403,6 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
             else --otherwise add the new data to the entry
                 if data[3] == targetName then
                     if not EH.CheckDupeContents(data[4], link.name) then
-                        EH.Debug("Adding : " .. link.name)
                         table.insert(data[4], {link.name, link.id, stackCount} )
                     end
                 else
