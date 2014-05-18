@@ -188,8 +188,7 @@ function EH.OnUpdate(time)
                 targetType = "skyshard"
 
                 if EH.name == "Skyshard" then
-                    data = EH.LogCheck(targetType, {subzone}, x, y, nil)
-                    if not data then
+                    if EH.LogCheck(targetType, {subzone}, x, y) then
                         EH.Log(targetType, {subzone}, x, y)
                     end
                 end
@@ -198,8 +197,7 @@ function EH.OnUpdate(time)
             elseif type == INTERACTION_NONE and EH.action == GetString(SI_GAMECAMERAACTIONTYPE12) then
                 targetType = "chest"
 
-                data = EH.LogCheck(targetType, {subzone}, x, y, nil)
-                if not data then
+                if EH.LogCheck(targetType, {subzone}, x, y) then
                     EH.Log(targetType, {subzone}, x, y)
                 end
 
@@ -207,8 +205,7 @@ function EH.OnUpdate(time)
             elseif EH.action == GetString(SI_GAMECAMERAACTIONTYPE16) then
                 targetType = "fish"
 
-                data = EH.LogCheck(targetType, {subzone}, x, y, nil)
-                if not data then
+                if EH.LogCheck(targetType, {subzone}, x, y) then
                     EH.Log(targetType, {subzone}, x, y)
                 end
 
