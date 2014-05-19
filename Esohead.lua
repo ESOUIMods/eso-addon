@@ -103,12 +103,19 @@ function EH.Log(type, nodes, ...)
 end
 
 -- Checks if we already have an entry for the object/npc within a certain x/y distance
-function EH.LogCheck(type, nodes, x, y)
+function EH.LogCheck(type, nodes, x, y, scale)
     local log = true
     local sv
 
     if x <= 0 or y <= 0 then
         return false
+    end
+
+    local distance
+    if scale == nil then
+        distance = 0.005
+    else
+        distance = scale
     end
 
     if EH.savedVars[type] == nil or EH.savedVars[type].data == nil then
@@ -132,7 +139,7 @@ function EH.LogCheck(type, nodes, x, y)
     for i = 1, #sv do
         local item = sv[i]
 
-        if math.abs(item[1] - x) < 0.005 and math.abs(item[2] - y) < 0.005 then
+        if math.abs(item[1] - x) < distance and math.abs(item[2] - y) < distance then
             log = false
         end
     end
@@ -188,7 +195,7 @@ function EH.OnUpdate(time)
                 targetType = "skyshard"
 
                 if EH.name == "Skyshard" then
-                    if EH.LogCheck(targetType, {subzone}, x, y) then
+                    if EH.LogCheck(targetType, {subzone}, x, y, nil) then
                         EH.Log(targetType, {subzone}, x, y)
                     end
                 end
@@ -197,7 +204,7 @@ function EH.OnUpdate(time)
             elseif type == INTERACTION_NONE and EH.action == GetString(SI_GAMECAMERAACTIONTYPE12) then
                 targetType = "chest"
 
-                if EH.LogCheck(targetType, {subzone}, x, y) then
+                if EH.LogCheck(targetType, {subzone}, x, y, nil) then
                     EH.Log(targetType, {subzone}, x, y)
                 end
 
@@ -205,7 +212,7 @@ function EH.OnUpdate(time)
             elseif EH.action == GetString(SI_GAMECAMERAACTIONTYPE16) then
                 targetType = "fish"
 
-                if EH.LogCheck(targetType, {subzone}, x, y) then
+                if EH.LogCheck(targetType, {subzone}, x, y, nil) then
                     EH.Log(targetType, {subzone}, x, y)
                 end
 
@@ -374,11 +381,11 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
         end
 
         if material == 5 then
-            if EH.LogCheck("provisioning", {subzone, material, link.id}, x, y) then
+            if EH.LogCheck("provisioning", {subzone, material, link.id}, x, y, nil) then
                 EH.Log("provisioning", {subzone, material, link.id}, x, y, stackCount, targetName)
             end
         else
-            if EH.LogCheck("harvest", {subzone, material}, x, y) then
+            if EH.LogCheck("harvest", {subzone, material}, x, y, nil) then
                 EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
             end
         end
@@ -394,7 +401,7 @@ function EH.OnShowBook(eventCode, title, body, medium, showTitle)
 
     local targetType = "book"
 
-    if EH.LogCheck(targetType, {subzone, title}, x, y) then
+    if EH.LogCheck(targetType, {subzone, title}, x, y, nil) then
         EH.Log(targetType, {subzone, title}, x, y)
     end
 end
@@ -410,7 +417,7 @@ function EH.VendorOpened()
 
     local storeItems = {}
 
-    if EH.LogCheck(targetType, {subzone, EH.name}, x, y) then
+    if EH.LogCheck(targetType, {subzone, EH.name}, x, y, 0.008) then
         for entryIndex = 1, GetNumStoreItems() do
             local icon, name, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyId1, currencyQuantity1, currencyIcon1,
             currencyName1, currencyType2, currencyId2, currencyQuantity2, currencyIcon2, currencyName2 = GetStoreEntryInfo(entryIndex)
@@ -453,7 +460,7 @@ function EH.OnQuestAdded(_, questIndex)
         return
     end
 
-    if EH.LogCheck(targetType, {EH.currentConversation.subzone, questName}, EH.currentConversation.x, EH.currentConversation.y) then
+    if EH.LogCheck(targetType, {EH.currentConversation.subzone, questName}, EH.currentConversation.x, EH.currentConversation.y, nil) then
         EH.Log(
             targetType,
             {
@@ -504,7 +511,7 @@ function EH.OnTargetChange(eventCode)
 
         local level = EH.GetUnitLevel(tag)
 
-        if EH.LogCheck("npc", {subzone, name }, x, y) then
+        if EH.LogCheck("npc", {subzone, name }, x, y, 0.008) then
             EH.Log("npc", {subzone, name}, x, y, level)
         end
     end
