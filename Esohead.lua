@@ -417,7 +417,7 @@ function EH.VendorOpened()
 
     local storeItems = {}
 
-    if EH.LogCheck(targetType, {subzone, EH.name}, x, y, 0.008) then
+    if EH.LogCheck(targetType, {subzone, EH.name}, x, y, 0.1) then
         for entryIndex = 1, GetNumStoreItems() do
             local icon, name, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyId1, currencyQuantity1, currencyIcon1,
             currencyName1, currencyType2, currencyId2, currencyQuantity2, currencyIcon2, currencyName2 = GetStoreEntryInfo(entryIndex)
@@ -511,7 +511,7 @@ function EH.OnTargetChange(eventCode)
 
         local level = EH.GetUnitLevel(tag)
 
-        if EH.LogCheck("npc", {subzone, name }, x, y, 0.008) then
+        if EH.LogCheck("npc", {subzone, name }, x, y, 0.05) then
             EH.Log("npc", {subzone, name}, x, y, level)
         end
     end
@@ -520,6 +520,28 @@ end
 -----------------------------------------
 --           Slash Command             --
 -----------------------------------------
+
+EH.validCategories = {
+    "chest",
+    "fish",
+    "provisioning",
+    "book",
+    "vendor",
+    "quest",
+    "harvest",
+    "npc",
+    "skyshard",
+}
+
+function EH.IsValidCategory(name)
+    for k, v in pairs(EH.validCategories) do
+        if string.lower(v) == string.lower(name) then
+            return true
+        end
+    end
+
+    return false
+end
 
 SLASH_COMMANDS["/esohead"] = function (cmd)
     local commands = {}
@@ -545,13 +567,23 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
         end
 
     elseif commands[1] == "reset" then
-        for type,sv in pairs(EH.savedVars) do
-            if type ~= "internal" then
-                EH.savedVars[type].data = {}
+        if #commands ~= 2 then 
+            for type,sv in pairs(EH.savedVars) do
+                if type ~= "internal" then
+                    EH.savedVars[type].data = {}
+                end
+            end
+            EH.Debug("Saved data has been completely reset")
+        else
+            if commands[2] ~= "internal" then
+                if EH.IsValidCategory(commands[2]) then
+                    EH.savedVars[commands[2]].data = {}
+                    EH.Debug("Saved data : " .. commands[2] .. " has been reset")
+                else
+                    return EH.Debug("Please enter a valid category to reset")
+                end
             end
         end
-
-        EH.Debug("Saved data has been completely reset")
 
     elseif commands[1] == "datalog" then
         EH.Debug("---")
