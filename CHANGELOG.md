@@ -6,6 +6,9 @@ Bugfixes
 - Fixed vendor tracking
 - Removed debug message for harvesting Nodes that do not exist in EsoheadConstants.lua, it is no longer needed.
 
+Features
+- User can reset specified data type (/esohead reset npc)
+
 Credits:
 - Code snipits borrowed from HarvestMap by Shinni
 
