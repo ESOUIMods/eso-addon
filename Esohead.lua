@@ -194,7 +194,7 @@ function EH.OnUpdate(time)
             elseif type == INTERACTION_NONE and EH.action == GetString(SI_GAMECAMERAACTIONTYPE12) then
                 targetType = "chest"
 
-                data = EH.LogCheck(targetType, {subzone}, x, y, nil)
+                data = EH.LogCheck(targetType, {subzone}, x, y, 0.05)
                 if not data then
                     EH.Log(targetType, {subzone}, x, y)
                 end
@@ -203,7 +203,7 @@ function EH.OnUpdate(time)
             elseif EH.action == GetString(SI_GAMECAMERAACTIONTYPE16) then
                 targetType = "fish"
 
-                data = EH.LogCheck(targetType, {subzone}, x, y, nil)
+                data = EH.LogCheck(targetType, {subzone}, x, y, 0.05)
                 if not data then
                     EH.Log(targetType, {subzone}, x, y)
                 end
@@ -416,7 +416,7 @@ function EH.VendorOpened()
 
     local storeItems = {}
 
-    data = EH.LogCheck(targetType, {subzone, EH.name}, x, y, nil)
+    data = EH.LogCheck(targetType, {subzone, EH.name}, x, y, 0.1)
     if not data then -- when there is no node at the given location, save a new entry
         for entryIndex = 1, GetNumStoreItems() do
             local icon, name, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyId1, currencyQuantity1, currencyIcon1,
@@ -512,7 +512,7 @@ function EH.OnTargetChange(eventCode)
 
         local level = EH.GetUnitLevel(tag)
 
-    data = EH.LogCheck("npc", {subzone, name }, x, y, nil)
+    data = EH.LogCheck("npc", {subzone, name }, x, y, 0.05)
     if not data then -- when there is no node at the given location, save a new entry
             EH.Log("npc", {subzone, name}, x, y, level)
         end
