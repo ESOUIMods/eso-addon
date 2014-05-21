@@ -18,17 +18,11 @@ function EH.Initialize()
     EH.dataDefault = {
         data = {}
     }
-    -- {{altered}}
-    -- EH.currentTarget = ""
-    -- EH.lastTarget = ""
-    -- {{altered}}
 
-    -- {{added}}
     EH.name = ""
     EH.time = 0
     EH.isHarvesting = false
     EH.action = ""
-    -- {{added}}
 
     EH.currentConversation = {
         npcName = "",
@@ -45,7 +39,6 @@ function EH.InitSavedVariables()
         ["skyshard"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "skyshard", EH.dataDefault),
         ["book"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "book", EH.dataDefault),
         ["harvest"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 5, "harvest", EH.dataDefault),
-        ["provisioning"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 5, "provisioning", EH.dataDefault),
         ["chest"]        = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "chest", EH.dataDefault),
         ["fish"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "fish", EH.dataDefault),
         ["npc"]          = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "npc", EH.dataDefault),
@@ -171,10 +164,8 @@ function EH.OnUpdate(time)
     local targetType
     local action, name, interactionBlocked, additionalInfo, context = GetGameCameraInteractableActionInfo()
 
-    -- {{added}}
     local isHarvesting = ( active and (type == INTERACTION_HARVEST) )
     if not isHarvesting then
-        -- d("I am NOT busy! Time : " .. time)
         if name then
             EH.name = name -- EH.name is the global current node
         end
@@ -185,10 +176,6 @@ function EH.OnUpdate(time)
 
         if action ~= EH.action then
             EH.action = action -- EH.action is the global current action
-            -- if EH.action ~= nil then
-            --     d("New Action! : " .. EH.action .. " : " .. time)
-            -- end
-            -- d(EH.action .. " : " .. GetString(SI_GAMECAMERAACTIONTYPE16))
 
             -- Check Reticle and Non Harvest Actions
             -- Skyshard
@@ -221,15 +208,12 @@ function EH.OnUpdate(time)
                 end
 
             end
-        end -- End of {{if action ~= EH.action then}}
-    else -- End of {{if not isHarvesting then}}
-        -- d("I am REALLY busy! Time : " .. time)
+        end
+    else
         EH.isHarvesting = true
         EH.time = time
 
-    -- End of Else Block
-    end -- End of Else Block
-    -- {{added}}
+    end
 end
 
 -----------------------------------------
@@ -362,15 +346,6 @@ function EH.ItemLinkParse(link)
     }
 end
 
-function EH.CheckDupeContents(items, itemName)
-    for _, entry in pairs( items ) do
-        if entry[1] == itemName then
-            return true
-        end
-    end
-    return false
-end
-
 function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundCategory, lootType, lootedBySelf)
     if not IsGameCameraUIModeActive() then
         targetName = EH.name
@@ -383,47 +358,16 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
         local material = EH.GetTradeskillByMaterial(link.id)
         local x, y, a, subzone, world = EH.GetUnitPosition("player")
 
-        -- This attempts to resolve an issue where you can loot a harvesting
-        -- node that has worms or plump worms in it and it gets recorded.
-        -- It also attempts to resolve adding non harvest nodes to harvest
-        -- such as bottles, crates, barrels, baskets, wine racks, and
-        -- heavy sacks.  Some of those containers give random items but can
-        -- also give solvents.  Heavy Sacks can contain Enchanting reagents.
-        if not EH.isHarvesting and material >= 1 then
-            material = 5
-        elseif EH.isHarvesting and material == 5 then
-            material = 0
-        end
-
         if material == 0 then
             return
         end
 
-        if material == 5 then
-            data = EH.LogCheck("provisioning", { subzone, material }, x, y, 0.003)
-            if not data then -- when there is no node at the given location, save a new entry
-                EH.Log("provisioning", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
-            else --otherwise add the new data to the entry
-                if data[3] == targetName then
-                    if not EH.CheckDupeContents(data[4], link.name) then
-                        table.insert(data[4], {link.name, link.id, stackCount} )
-                    end
-                else
-                    EH.Log("provisioning", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
-                end
-            end
-        else
-            data = EH.LogCheck("harvest", { subzone, material }, x, y, 0.003)
-            if not data then -- when there is no node at the given location, save a new entry
-                EH.Log("harvest", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
-            else --otherwise add the new data to the entry
-                if data[3] == targetName then
-                    if not EH.CheckDupeContents(data[4], link.name) then
-                        table.insert(data[4], {link.name, link.id, stackCount} )
-                    end
-                else
-                    EH.Log("harvest", { subzone, material }, x, y, targetName, { {link.name, link.id, stackCount} } )
-                end
+        data = EH.LogCheck("harvest", {subzone, material}, x, y, nil)
+        if not data then -- when there is no node at the given location, save a new entry
+            EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
+        else -- when there is an existing node of a different type, save a new entry
+            if data[3] ~= targetName then
+                EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
             end
         end
     end
@@ -562,6 +506,28 @@ end
 --           Slash Command             --
 -----------------------------------------
 
+EH.validCategories = {
+    "chest",
+    "fish",
+    "provisioning",
+    "book",
+    "vendor",
+    "quest",
+    "harvest",
+    "npc",
+    "skyshard",
+}
+
+function EH.IsValidCategory(name)
+    for k, v in pairs(EH.validCategories) do
+        if string.lower(v) == string.lower(name) then
+            return true
+        end
+    end
+
+    return false
+end
+
 SLASH_COMMANDS["/esohead"] = function (cmd)
     local commands = {}
     local index = 1
@@ -586,13 +552,23 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
         end
 
     elseif commands[1] == "reset" then
-        for type,sv in pairs(EH.savedVars) do
-            if type ~= "internal" then
-                EH.savedVars[type].data = {}
+        if #commands ~= 2 then 
+            for type,sv in pairs(EH.savedVars) do
+                if type ~= "internal" then
+                    EH.savedVars[type].data = {}
+                end
+            end
+            EH.Debug("Saved data has been completely reset")
+        else
+            if commands[2] ~= "internal" then
+                if EH.IsValidCategory(commands[2]) then
+                    EH.savedVars[commands[2]].data = {}
+                    EH.Debug("Saved data : " .. commands[2] .. " has been reset")
+                else
+                    return EH.Debug("Please enter a valid category to reset")
+                end
             end
         end
-
-        EH.Debug("Saved data has been completely reset")
 
     elseif commands[1] == "datalog" then
         EH.Debug("---")
@@ -603,7 +579,6 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
             ["skyshard"] = 0,
             ["npc"] = 0,
             ["harvest"] = 0,
-            ["provisioning"] = 0,
             ["chest"] = 0,
             ["fish"] = 0,
             ["book"] = 0,
@@ -615,14 +590,6 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
             if type ~= "internal" and (type == "skyshard" or type == "chest" or type == "fish") then
                 for zone, t1 in pairs(EH.savedVars[type].data) do
                     counter[type] = counter[type] + #EH.savedVars[type].data[zone]
-                end
-            elseif type ~= "internal" and type == "provisioning" then
-                for zone, t1 in pairs(EH.savedVars[type].data) do
-                    for item, t2 in pairs(EH.savedVars[type].data[zone]) do
-                        for data, t3 in pairs(EH.savedVars[type].data[zone][item]) do
-                            counter[type] = counter[type] + #EH.savedVars[type].data[zone][item][data]
-                        end
-                    end
                 end
             elseif type ~= "internal" then
                 for zone, t1 in pairs(EH.savedVars[type].data) do
@@ -637,7 +604,6 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
         EH.Debug("Monster/NPCs: "     .. EH.NumberFormat(counter["npc"]))
         EH.Debug("Lore/Skill Books: " .. EH.NumberFormat(counter["book"]))
         EH.Debug("Harvest: "          .. EH.NumberFormat(counter["harvest"]))
-        EH.Debug("Provisioning: "     .. EH.NumberFormat(counter["provisioning"]))
         EH.Debug("Treasure Chests: "  .. EH.NumberFormat(counter["chest"]))
         EH.Debug("Fishing Pools: "    .. EH.NumberFormat(counter["fish"]))
         EH.Debug("Quests: "           .. EH.NumberFormat(counter["quest"]))
