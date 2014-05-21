@@ -350,10 +350,16 @@ end
 function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundCategory, lootType, lootedBySelf)
     if not IsGameCameraUIModeActive() then
         targetName = EH.name
-
-        if not EH.IsValidNode(targetName) then
+        
+        -- There is no provisioning now so if the player isn't harvesting
+        -- then you don't need to do anything.
+        if not EH.isHarvesting then 
             return
         end
+
+        -- if not EH.IsValidNode(targetName) then
+        --     return
+        -- end
 
         local link = EH.ItemLinkParse(objectName)
         local material = EH.GetTradeskillByMaterial(link.id)
@@ -373,7 +379,7 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
 
         --[[
         if material == 5 then
-            data = EH.LogCheck("provisioning", {subzone, material, link.id}, x, y)
+            data = EH.LogCheck("provisioning", {subzone, material, link.id}, x, y, nil)
             if not data then -- when there is no node at the given location, save a new entry
                 EH.Log("provisioning", {subzone, material, link.id}, x, y, stackCount, targetName)
         else
