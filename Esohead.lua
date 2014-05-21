@@ -366,7 +366,7 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
         if not data then -- when there is no node at the given location, save a new entry
             EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
         else -- when there is an existing node of a different type, save a new entry
-            if data[3] ~= targetName then
+            if data[4] ~= targetName then
                 EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
             end
         end
