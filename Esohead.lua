@@ -39,6 +39,7 @@ function EH.InitSavedVariables()
         ["skyshard"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "skyshard", EH.dataDefault),
         ["book"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "book", EH.dataDefault),
         ["harvest"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 4, "harvest", EH.dataDefault),
+        ["provisioning"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 5, "provisioning", EH.dataDefault),
         ["chest"]        = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "chest", EH.dataDefault),
         ["fish"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "fish", EH.dataDefault),
         ["npc"]          = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "npc", EH.dataDefault),
@@ -358,18 +359,34 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
         local material = EH.GetTradeskillByMaterial(link.id)
         local x, y, a, subzone, world = EH.GetUnitPosition("player")
 
+        --[[
+        if not EH.isHarvesting and material >= 1 then
+            material = 5
+        elseif EH.isHarvesting and material == 5 then
+            material = 0
+        end
+        ]]--
+
         if material == 0 then
             return
         end
 
-        data = EH.LogCheck("harvest", {subzone, material}, x, y, nil)
-        if not data then -- when there is no node at the given location, save a new entry
-            EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
-        else -- when there is an existing node of a different type, save a new entry
-            if data[4] ~= targetName then
+        --[[
+        if material == 5 then
+            data = EH.LogCheck("provisioning", {subzone, material, link.id}, x, y)
+            if not data then -- when there is no node at the given location, save a new entry
+                EH.Log("provisioning", {subzone, material, link.id}, x, y, stackCount, targetName)
+        else
+        ]]--
+            data = EH.LogCheck("harvest", {subzone, material}, x, y, nil)
+            if not data then -- when there is no node at the given location, save a new entry
                 EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
+            else -- when there is an existing node of a different type, save a new entry
+                if data[4] ~= targetName then
+                    EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
+                end
             end
-        end
+   --[[ end ]]--
     end
 end
 
@@ -509,6 +526,7 @@ end
 EH.validCategories = {
     "chest",
     "fish",
+    --[[ "provisioning", ]]--
     "book",
     "vendor",
     "quest",
@@ -578,6 +596,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
             ["skyshard"] = 0,
             ["npc"] = 0,
             ["harvest"] = 0,
+            --[[ ["provisioning"] = 0, ]]--
             ["chest"] = 0,
             ["fish"] = 0,
             ["book"] = 0,
@@ -590,6 +609,16 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
                 for zone, t1 in pairs(EH.savedVars[type].data) do
                     counter[type] = counter[type] + #EH.savedVars[type].data[zone]
                 end
+            --[[
+            elseif type ~= "internal" and type == "provisioning" then
+                for zone, t1 in pairs(EH.savedVars[type].data) do
+                    for item, t2 in pairs(EH.savedVars[type].data[zone]) do
+                        for data, t3 in pairs(EH.savedVars[type].data[zone][item]) do
+                            counter[type] = counter[type] + #EH.savedVars[type].data[zone][item][data]
+                        end
+                    end
+                end
+            ]]--
             elseif type ~= "internal" then
                 for zone, t1 in pairs(EH.savedVars[type].data) do
                     for data, t2 in pairs(EH.savedVars[type].data[zone]) do
@@ -603,6 +632,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
         EH.Debug("Monster/NPCs: "     .. EH.NumberFormat(counter["npc"]))
         EH.Debug("Lore/Skill Books: " .. EH.NumberFormat(counter["book"]))
         EH.Debug("Harvest: "          .. EH.NumberFormat(counter["harvest"]))
+        --[[ EH.Debug("Provisioning: "     .. EH.NumberFormat(counter["provisioning"])) ]]--
         EH.Debug("Treasure Chests: "  .. EH.NumberFormat(counter["chest"]))
         EH.Debug("Fishing Pools: "    .. EH.NumberFormat(counter["fish"]))
         EH.Debug("Quests: "           .. EH.NumberFormat(counter["quest"]))
