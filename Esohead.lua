@@ -509,7 +509,6 @@ end
 EH.validCategories = {
     "chest",
     "fish",
-    "provisioning",
     "book",
     "vendor",
     "quest",
