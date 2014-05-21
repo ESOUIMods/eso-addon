@@ -18,8 +18,18 @@ function EH.Initialize()
     EH.dataDefault = {
         data = {}
     }
-    EH.currentTarget = ""
-    EH.lastTarget = ""
+    -- {{altered}}
+    -- EH.currentTarget = ""
+    -- EH.lastTarget = ""
+    -- {{altered}}
+
+    -- {{added}}
+    EH.name = ""
+    EH.time = 0
+    EH.isHarvesting = false
+    EH.action = ""
+    -- {{added}}
+
     EH.currentConversation = {
         npcName = "",
         npcLevel = 0,
@@ -65,7 +75,9 @@ function EH.Log(type, nodes, ...)
 
     for i = 1, #nodes do
         local node = nodes[i];
-        node = string.gsub(node, "\"", "\\\"");
+        if string.find(node, '\"') then
+            node = string.gsub(node, '\"', '\'')
+        end
 
         if sv[node] == nil then
             sv[node] = {}
@@ -91,12 +103,19 @@ function EH.Log(type, nodes, ...)
 end
 
 -- Checks if we already have an entry for the object/npc within a certain x/y distance
-function EH.LogCheck(type, nodes, x, y)
+function EH.LogCheck(type, nodes, x, y, scale)
     local log = true
     local sv
 
     if x <= 0 or y <= 0 then
         return false
+    end
+
+    local distance
+    if scale == nil then
+        distance = 0.005
+    else
+        distance = scale
     end
 
     if EH.savedVars[type] == nil or EH.savedVars[type].data == nil then
@@ -107,7 +126,9 @@ function EH.LogCheck(type, nodes, x, y)
 
     for i = 1, #nodes do
         local node = nodes[i];
-        node = string.gsub(node, "\"", "\\\"");
+        if string.find(node, '\"') then
+            node = string.gsub(node, '\"', '\'')
+        end
 
         if sv[node] == nil then
             sv[node] = {}
@@ -118,7 +139,7 @@ function EH.LogCheck(type, nodes, x, y)
     for i = 1, #sv do
         local item = sv[i]
 
-        if math.abs(item[1] - x) < 0.005 and math.abs(item[2] - y) < 0.005 then
+        if math.abs(item[1] - x) < distance and math.abs(item[2] - y) < distance then
             log = false
         end
     end
@@ -142,99 +163,69 @@ function EH.NumberFormat(num)
 end
 
 -- Listens for anything that is not event driven by the API but needs to be tracked
-function EH.OnUpdate()
-    if IsGameCameraUIModeActive() then
-        return
-    end
-
-    local action, name, interactionBlocked, additionalInfo, context = GetGameCameraInteractableActionInfo()
-
-    if name ~= nil and not IsPlayerInteractingWithObject() then
-        EH.lastTarget = name
-    end
-
-    if name == nil then
-        EH.currentTarget = ""
+function EH.OnUpdate(time)
+    if IsGameCameraUIModeActive() or IsUnitInCombat("player") then
         return
     end
 
     local type = GetInteractionType()
-
-    if action == nil or name == "" or name == EH.currentTarget then
-        if type == INTERACTION_HARVEST then
-            EH.isHarvesting = true
-        else
-            EH.isHarvesting = false
-        end
-        return
-    end
-
-    EH.currentTarget = name
-
     local active = IsPlayerInteractingWithObject()
     local x, y, a, subzone, world = EH.GetUnitPosition("player")
     local targetType
+    local action, name, interactionBlocked, additionalInfo, context = GetGameCameraInteractableActionInfo()
 
-    -- Skyshard
-    if type == INTERACTION_NONE and action == GetString(SI_GAMECAMERAACTIONTYPE5) then
-        targetType = "skyshard"
-
-        if name == "Skyshard" then
-            if EH.LogCheck(targetType, {subzone}, x, y) then
-                EH.Log(targetType, {subzone}, x, y)
-            end
+    -- {{added}}
+    local isHarvesting = ( active and (type == INTERACTION_HARVEST) )
+    if not isHarvesting then
+        -- d("I am NOT busy! Time : " .. time)
+        if name then
+            EH.name = name -- EH.name is the global current node
         end
 
-    -- Chest
-    elseif type == INTERACTION_NONE and action == GetString(SI_GAMECAMERAACTIONTYPE12) then
-        targetType = "chest"
-
-        if EH.LogCheck(targetType, {subzone}, x, y) then
-            EH.Log(targetType, {subzone}, x, y)
+        if EH.isHarvesting and time - EH.time > 1 then
+            EH.isHarvesting = false
         end
 
-    -- Fishing Nodes
-    elseif action == GetString(SI_GAMECAMERAACTIONTYPE16) then
-        targetType = "fish"
+        if action ~= EH.action then
+            EH.action = action -- EH.action is the global current action
 
-        if EH.LogCheck(targetType, {subzone}, x, y) then
-            EH.Log(targetType, {subzone}, x, y)
-        end
+            -- Check Reticle and Non Harvest Actions
+            -- Skyshard
+            if type == INTERACTION_NONE and EH.action == GetString(SI_GAMECAMERAACTIONTYPE5) then
+                targetType = "skyshard"
 
-    -- NPC Vendor
-    elseif active and type == INTERACTION_VENDOR then
-        targetType = "vendor"
-
-        local storeItems = {}
-
-        if EH.LogCheck(targetType, {subzone, name}, x, y) then
-            for entryIndex = 1, GetNumStoreItems() do
-                local icon, name, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyId1, currencyQuantity1, currencyIcon1,
-                currencyName1, currencyType2, currencyId2, currencyQuantity2, currencyIcon2, currencyName2 = GetStoreEntryInfo(entryIndex)
-
-                if(stack > 0) then
-                    local itemData =
-                    {
-                        name,
-                        stack,
-                        price,
-                        quality,
-                        questNameColor,
-                        currencyType1,
-                        currencyQuantity1,
-                        currencyType2,
-                        currencyQuantity2,
-                        { GetStoreEntryTypeInfo(entryIndex) },
-                        GetStoreEntryStatValue(entryIndex),
-                    }
-
-                    storeItems[#storeItems + 1] = itemData
+                if EH.name == "Skyshard" then
+                    if EH.LogCheck(targetType, {subzone}, x, y, nil) then
+                        EH.Log(targetType, {subzone}, x, y)
+                    end
                 end
-            end
 
-            EH.Log(targetType, {subzone, name}, x, y, storeItems)
-        end
-    end
+            -- Chest
+            elseif type == INTERACTION_NONE and EH.action == GetString(SI_GAMECAMERAACTIONTYPE12) then
+                targetType = "chest"
+
+                if EH.LogCheck(targetType, {subzone}, x, y, nil) then
+                    EH.Log(targetType, {subzone}, x, y)
+                end
+
+            -- Fishing Nodes
+            elseif EH.action == GetString(SI_GAMECAMERAACTIONTYPE16) then
+                targetType = "fish"
+
+                if EH.LogCheck(targetType, {subzone}, x, y, nil) then
+                    EH.Log(targetType, {subzone}, x, y)
+                end
+
+            end
+        end -- End of {{if action ~= EH.action then}}
+    else -- End of {{if not isHarvesting then}}
+        -- d("I am REALLY busy! Time : " .. time)
+        EH.isHarvesting = true
+        EH.time = time
+
+    -- End of Else Block
+    end -- End of Else Block
+    -- {{added}}
 end
 
 -----------------------------------------
@@ -369,43 +360,32 @@ end
 
 function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundCategory, lootType, lootedBySelf)
     if not IsGameCameraUIModeActive() then
-        targetName = EH.lastTarget
+        targetName = EH.name
+
+        if not EH.IsValidNode(targetName) then
+            return
+        end
 
         local link = EH.ItemLinkParse(objectName)
-        local material = ( EH.GetTradeskillByMaterial(link.id) or 0)
+        local material = EH.GetTradeskillByMaterial(link.id)
         local x, y, a, subzone, world = EH.GetUnitPosition("player")
+
+        if not EH.isHarvesting and material >= 1 then
+            material = 5
+        elseif EH.isHarvesting and material == 5 then
+            material = 0
+        end
 
         if material == 0 then
             return
         end
 
-         -- If the player is Harvesting material will not be 0 but name should
-         -- not be used because of localization.  By using the name players
-         -- don't record valid harvesting nodes.  When the player is not
-         -- Harvesting then use the targetName.  Exit if the targetName
-         -- is invalid.  Check for valid harvesting node Name is no longer needed.
-         -- However, valid provisioning nodes may still be accidentally ignored
-         -- because of localization.
-        if not EH.isHarvesting then --<< Not Harvesting
-            if not EH.IsValidNode(targetName) then
-                return
-            end 
-            -- The player is not Harvesting and the name was valid but it
-            -- should not go under harvest because the player was not 
-            -- harvesting. Set material to 5 to prevent it from being recorded
-            -- under "harvest".
-            -- It will be a Wine Rack, Bottle, Crates, Barrels, all of which
-            -- give random items.  The random item might be valid for 
-            -- professions other then provisioning but there is no guarantee.
-            material = 5
-        end
-
         if material == 5 then
-            if EH.LogCheck("provisioning", {subzone, material, link.id}, x, y) then
+            if EH.LogCheck("provisioning", {subzone, material, link.id}, x, y, nil) then
                 EH.Log("provisioning", {subzone, material, link.id}, x, y, stackCount, targetName)
             end
         else
-            if EH.LogCheck("harvest", {subzone, material}, x, y) then
+            if EH.LogCheck("harvest", {subzone, material}, x, y, nil) then
                 EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
             end
         end
@@ -421,8 +401,48 @@ function EH.OnShowBook(eventCode, title, body, medium, showTitle)
 
     local targetType = "book"
 
-    if EH.LogCheck(targetType, {subzone, title}, x, y) then
+    if EH.LogCheck(targetType, {subzone, title}, x, y, nil) then
         EH.Log(targetType, {subzone, title}, x, y)
+    end
+end
+
+-----------------------------------------
+--          Vendor Tracking            --
+-----------------------------------------
+
+function EH.VendorOpened()
+    local x, y, a, subzone, world = EH.GetUnitPosition("player")
+
+    targetType = "vendor"
+
+    local storeItems = {}
+
+    if EH.LogCheck(targetType, {subzone, EH.name}, x, y, 0.1) then
+        for entryIndex = 1, GetNumStoreItems() do
+            local icon, name, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyId1, currencyQuantity1, currencyIcon1,
+            currencyName1, currencyType2, currencyId2, currencyQuantity2, currencyIcon2, currencyName2 = GetStoreEntryInfo(entryIndex)
+
+            if(stack > 0) then
+            local itemData =
+            {
+                name,
+                stack,
+                price,
+                quality,
+                questNameColor,
+                currencyType1,
+                currencyQuantity1,
+                currencyType2,
+                currencyQuantity2,
+                { GetStoreEntryTypeInfo(entryIndex) },
+                GetStoreEntryStatValue(entryIndex),
+                }
+
+                storeItems[#storeItems + 1] = itemData
+            end
+        end
+
+        EH.Log(targetType, {subzone, EH.name}, x, y, storeItems)
     end
 end
 
@@ -440,7 +460,7 @@ function EH.OnQuestAdded(_, questIndex)
         return
     end
 
-    if EH.LogCheck(targetType, {EH.currentConversation.subzone, questName}, EH.currentConversation.x, EH.currentConversation.y) then
+    if EH.LogCheck(targetType, {EH.currentConversation.subzone, questName}, EH.currentConversation.x, EH.currentConversation.y, nil) then
         EH.Log(
             targetType,
             {
@@ -464,7 +484,7 @@ function EH.OnChatterBegin()
     local x, y, a, subzone, world = EH.GetUnitPosition("player")
     local npcLevel = EH.GetUnitLevel("interact")
 
-    EH.currentConversation.npcName = EH.currentTarget
+    EH.currentConversation.npcName = EH.name
     EH.currentConversation.npcLevel = npcLevel
     EH.currentConversation.x = x
     EH.currentConversation.y = y
@@ -491,7 +511,7 @@ function EH.OnTargetChange(eventCode)
 
         local level = EH.GetUnitLevel(tag)
 
-        if EH.LogCheck("npc", {subzone, name }, x, y) then
+        if EH.LogCheck("npc", {subzone, name }, x, y, 0.05) then
             EH.Log("npc", {subzone, name}, x, y, level)
         end
     end
@@ -500,6 +520,28 @@ end
 -----------------------------------------
 --           Slash Command             --
 -----------------------------------------
+
+EH.validCategories = {
+    "chest",
+    "fish",
+    "provisioning",
+    "book",
+    "vendor",
+    "quest",
+    "harvest",
+    "npc",
+    "skyshard",
+}
+
+function EH.IsValidCategory(name)
+    for k, v in pairs(EH.validCategories) do
+        if string.lower(v) == string.lower(name) then
+            return true
+        end
+    end
+
+    return false
+end
 
 SLASH_COMMANDS["/esohead"] = function (cmd)
     local commands = {}
@@ -525,13 +567,23 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
         end
 
     elseif commands[1] == "reset" then
-        for type,sv in pairs(EH.savedVars) do
-            if type ~= "internal" then
-                EH.savedVars[type].data = {}
+        if #commands ~= 2 then 
+            for type,sv in pairs(EH.savedVars) do
+                if type ~= "internal" then
+                    EH.savedVars[type].data = {}
+                end
+            end
+            EH.Debug("Saved data has been completely reset")
+        else
+            if commands[2] ~= "internal" then
+                if EH.IsValidCategory(commands[2]) then
+                    EH.savedVars[commands[2]].data = {}
+                    EH.Debug("Saved data : " .. commands[2] .. " has been reset")
+                else
+                    return EH.Debug("Please enter a valid category to reset")
+                end
             end
         end
-
-        EH.Debug("Saved data has been completely reset")
 
     elseif commands[1] == "datalog" then
         EH.Debug("---")
@@ -577,7 +629,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
         EH.Debug("Lore/Skill Books: " .. EH.NumberFormat(counter["book"]))
         EH.Debug("Harvest: "          .. EH.NumberFormat(counter["harvest"]))
         EH.Debug("Provisioning: "     .. EH.NumberFormat(counter["provisioning"]))
-        EH.Debug("Treasure Chests: "  .. EH.NumberFormat(counter["skyshard"]))
+        EH.Debug("Treasure Chests: "  .. EH.NumberFormat(counter["chest"]))
         EH.Debug("Fishing Pools: "    .. EH.NumberFormat(counter["fish"]))
         EH.Debug("Quests: "           .. EH.NumberFormat(counter["quest"]))
         EH.Debug("Vendor Lists: "     .. EH.NumberFormat(counter["vendor"]))
@@ -612,11 +664,13 @@ function EH.OnLoad(eventCode, addOnName)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_SHOW_BOOK, EH.OnShowBook)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_QUEST_ADDED, EH.OnQuestAdded)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_LOOT_RECEIVED, EH.OnLootReceived)
+    -- {{added}}
+    EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_OPEN_STORE, EH.VendorOpened)
 end
 
 EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_ADD_ON_LOADED, function (eventCode, addOnName)
     if addOnName == "Esohead" then
         EH.Initialize()
         EH.OnLoad(eventCode, addOnName)
-	end
+    end
 end)

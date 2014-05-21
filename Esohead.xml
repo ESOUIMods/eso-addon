@@ -2,7 +2,7 @@
     <Controls>
         <TopLevelControl name="EsoheadUi">
             <OnUpdate>
-                EH.OnUpdate()
+                EH.OnUpdate(time)
             </OnUpdate>
         </TopLevelControl>
 
