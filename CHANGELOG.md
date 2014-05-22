@@ -2,26 +2,26 @@
 
 Bugfixes
 - Data logged with double quotes in the name are now escaped properly, this addresses many lua errors users were experiencing.
-- Sharlikran PR#4: Various fixes with harvest / provisioning loot accuracy
+- Sharlikran PR#4: Various fixes with harvest loot accuracy
 - Fixed vendor tracking
 - Removed debug message for harvesting Nodes that do not exist in EsoheadConstants.lua, it is no longer needed.
 
-Changes:
-- Removed Provisioning
+Changes
+- Removed logging of provisioning data
 
 Features
 - User can reset specified data type (/esohead reset npc)
 
 Credits:
-- Code snipits borrowed from HarvestMap by Shinni
+- Code snippets borrowed from HarvestMap by Shinni
 
 ##0.1.9
 
 Bugfixes
-- Sharlikran PR#4: Added "Heavy Scak" and changed "Kresh Weed" and "Silver Weed" to "Kreshweed" and "Silverweed"
+- Sharlikran PR#4: Added "Heavy Sack" and changed "Kresh Weed" and "Silver Weed" to "Kreshweed" and "Silverweed"
 
 Features
-- Added localization for German and French.  While German only needs a few translations the French localization needs many updates.  Any help would be appreciated.
+- Added localization for German and French.  While German only needs a few translations, the French localization needs many updates.  Any help would be appreciated.
 - Added debug message for harvesting Nodes that do not exist in EsoheadConstants.lua.  It should only fire when you are harvesting.
 
 Credits:

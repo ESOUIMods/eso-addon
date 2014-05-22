@@ -128,7 +128,7 @@ EH.rawMaterials = {
         30166,
     },
     -- If this is an empty set then there is no need for a format update
-    -- and users will not loose previous saved data
+    -- and users will not lose previous saved data
     [5] = {
         --[[
         26802,

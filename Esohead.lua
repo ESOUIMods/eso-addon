@@ -98,7 +98,7 @@ end
 
 -- Checks if we already have an entry for the object/npc within a certain x/y distance
 function EH.LogCheck(type, nodes, x, y, scale)
-    local log = nil
+    local log
     local sv
 
     local distance
