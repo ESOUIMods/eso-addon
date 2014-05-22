@@ -347,6 +347,17 @@ function EH.ItemLinkParse(link)
     }
 end
 
+function EH.IsDupeHarvestNode(map, profession, locX, locY, stackCount, nodeName, ItemID)
+    local nodes = EH.savedVars["harvest"]["data"][map][profession]
+    for _, node in pairs(nodes) do
+        if (node[1] == locX) and (node[2] == locY) and (node[4] == nodeName) then
+            return true
+        end
+    end
+    
+    return false
+end
+
 function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundCategory, lootType, lootedBySelf)
     if not IsGameCameraUIModeActive() then
         targetName = EH.name
@@ -388,7 +399,7 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
             if not data then -- when there is no node at the given location, save a new entry
                 EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
             else -- when there is an existing node of a different type, save a new entry
-                if data[4] ~= targetName then
+                if not EH.IsDupeHarvestNode(subzone, material, x, y, stackCount, targetName, link.id) then
                     EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
                 end
             end
