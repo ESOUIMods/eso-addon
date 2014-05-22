@@ -127,7 +127,10 @@ EH.rawMaterials = {
         30165,
         30166,
     },
+    -- If this is an empty set then there is no need for a format update
+    -- and users will not loose previous saved data
     [5] = {
+        --[[
         26802,
         26954,
         26962,
@@ -166,7 +169,7 @@ EH.rawMaterials = {
         28603,
         28604,
         28605,
-        28606, -- This is Plump Worms and found in some alchemy nodes
+        28606,
         28607,
         28608,
         28609,
@@ -239,6 +242,7 @@ EH.rawMaterials = {
         45522,
         45523,
         45524,
+        ]]--
     },
     [6] = {
         521,

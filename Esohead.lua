@@ -18,17 +18,11 @@ function EH.Initialize()
     EH.dataDefault = {
         data = {}
     }
-    -- {{altered}}
-    -- EH.currentTarget = ""
-    -- EH.lastTarget = ""
-    -- {{altered}}
 
-    -- {{added}}
     EH.name = ""
     EH.time = 0
     EH.isHarvesting = false
     EH.action = ""
-    -- {{added}}
 
     EH.currentConversation = {
         npcName = "",
@@ -45,7 +39,7 @@ function EH.InitSavedVariables()
         ["skyshard"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "skyshard", EH.dataDefault),
         ["book"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "book", EH.dataDefault),
         ["harvest"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 4, "harvest", EH.dataDefault),
-        ["provisioning"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 4, "provisioning", EH.dataDefault),
+        ["provisioning"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 5, "provisioning", EH.dataDefault),
         ["chest"]        = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "chest", EH.dataDefault),
         ["fish"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "fish", EH.dataDefault),
         ["npc"]          = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "npc", EH.dataDefault),
@@ -104,12 +98,8 @@ end
 
 -- Checks if we already have an entry for the object/npc within a certain x/y distance
 function EH.LogCheck(type, nodes, x, y, scale)
-    local log = true
+    local log = nil
     local sv
-
-    if x <= 0 or y <= 0 then
-        return false
-    end
 
     local distance
     if scale == nil then
@@ -118,8 +108,9 @@ function EH.LogCheck(type, nodes, x, y, scale)
         distance = scale
     end
 
+
     if EH.savedVars[type] == nil or EH.savedVars[type].data == nil then
-        return true
+        return nil
     else
         sv = EH.savedVars[type].data
     end
@@ -140,7 +131,7 @@ function EH.LogCheck(type, nodes, x, y, scale)
         local item = sv[i]
 
         if math.abs(item[1] - x) < distance and math.abs(item[2] - y) < distance then
-            log = false
+            log = item
         end
     end
 
@@ -174,10 +165,8 @@ function EH.OnUpdate(time)
     local targetType
     local action, name, interactionBlocked, additionalInfo, context = GetGameCameraInteractableActionInfo()
 
-    -- {{added}}
     local isHarvesting = ( active and (type == INTERACTION_HARVEST) )
     if not isHarvesting then
-        -- d("I am NOT busy! Time : " .. time)
         if name then
             EH.name = name -- EH.name is the global current node
         end
@@ -195,7 +184,8 @@ function EH.OnUpdate(time)
                 targetType = "skyshard"
 
                 if EH.name == "Skyshard" then
-                    if EH.LogCheck(targetType, {subzone}, x, y, nil) then
+                    data = EH.LogCheck(targetType, {subzone}, x, y, nil)
+                    if not data then
                         EH.Log(targetType, {subzone}, x, y)
                     end
                 end
@@ -204,7 +194,8 @@ function EH.OnUpdate(time)
             elseif type == INTERACTION_NONE and EH.action == GetString(SI_GAMECAMERAACTIONTYPE12) then
                 targetType = "chest"
 
-                if EH.LogCheck(targetType, {subzone}, x, y, 0.05) then
+                data = EH.LogCheck(targetType, {subzone}, x, y, 0.05)
+                if not data then
                     EH.Log(targetType, {subzone}, x, y)
                 end
 
@@ -212,20 +203,18 @@ function EH.OnUpdate(time)
             elseif EH.action == GetString(SI_GAMECAMERAACTIONTYPE16) then
                 targetType = "fish"
 
-                if EH.LogCheck(targetType, {subzone}, x, y, 0.05) then
+                data = EH.LogCheck(targetType, {subzone}, x, y, 0.05)
+                if not data then
                     EH.Log(targetType, {subzone}, x, y)
                 end
 
             end
-        end -- End of {{if action ~= EH.action then}}
-    else -- End of {{if not isHarvesting then}}
-        -- d("I am REALLY busy! Time : " .. time)
+        end
+    else
         EH.isHarvesting = true
         EH.time = time
 
-    -- End of Else Block
-    end -- End of Else Block
-    -- {{added}}
+    end
 end
 
 -----------------------------------------
@@ -358,37 +347,63 @@ function EH.ItemLinkParse(link)
     }
 end
 
+function EH.IsDupeHarvestNode(map, profession, locX, locY, stackCount, nodeName, ItemID)
+    local nodes = EH.savedVars["harvest"]["data"][map][profession]
+    for _, node in pairs(nodes) do
+        if (node[1] == locX) and (node[2] == locY) and (node[4] == nodeName) then
+            return true
+        end
+    end
+    
+    return false
+end
+
 function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundCategory, lootType, lootedBySelf)
     if not IsGameCameraUIModeActive() then
         targetName = EH.name
-
-        if not EH.IsValidNode(targetName) then
+        
+        -- There is no provisioning now so if the player isn't harvesting
+        -- then you don't need to do anything.
+        if not EH.isHarvesting then 
             return
         end
+
+        -- if not EH.IsValidNode(targetName) then
+        --     return
+        -- end
 
         local link = EH.ItemLinkParse(objectName)
         local material = EH.GetTradeskillByMaterial(link.id)
         local x, y, a, subzone, world = EH.GetUnitPosition("player")
 
+        --[[
         if not EH.isHarvesting and material >= 1 then
             material = 5
         elseif EH.isHarvesting and material == 5 then
             material = 0
         end
+        ]]--
 
         if material == 0 then
             return
         end
 
+        --[[
         if material == 5 then
-            if EH.LogCheck("provisioning", {subzone, material, link.id}, x, y, nil) then
+            data = EH.LogCheck("provisioning", {subzone, material, link.id}, x, y, nil)
+            if not data then -- when there is no node at the given location, save a new entry
                 EH.Log("provisioning", {subzone, material, link.id}, x, y, stackCount, targetName)
-            end
         else
-            if EH.LogCheck("harvest", {subzone, material}, x, y, nil) then
+        ]]--
+            data = EH.LogCheck("harvest", {subzone, material}, x, y, nil)
+            if not data then -- when there is no node at the given location, save a new entry
                 EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
+            else -- when there is an existing node of a different type, save a new entry
+                if not EH.IsDupeHarvestNode(subzone, material, x, y, stackCount, targetName, link.id) then
+                    EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
+                end
             end
-        end
+   --[[ end ]]--
     end
 end
 
@@ -401,7 +416,8 @@ function EH.OnShowBook(eventCode, title, body, medium, showTitle)
 
     local targetType = "book"
 
-    if EH.LogCheck(targetType, {subzone, title}, x, y, nil) then
+    data = EH.LogCheck(targetType, {subzone, title}, x, y, nil)
+    if not data then -- when there is no node at the given location, save a new entry
         EH.Log(targetType, {subzone, title}, x, y)
     end
 end
@@ -417,7 +433,8 @@ function EH.VendorOpened()
 
     local storeItems = {}
 
-    if EH.LogCheck(targetType, {subzone, EH.name}, x, y, 0.1) then
+    data = EH.LogCheck(targetType, {subzone, EH.name}, x, y, 0.1)
+    if not data then -- when there is no node at the given location, save a new entry
         for entryIndex = 1, GetNumStoreItems() do
             local icon, name, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyId1, currencyQuantity1, currencyIcon1,
             currencyName1, currencyType2, currencyId2, currencyQuantity2, currencyIcon2, currencyName2 = GetStoreEntryInfo(entryIndex)
@@ -460,7 +477,8 @@ function EH.OnQuestAdded(_, questIndex)
         return
     end
 
-    if EH.LogCheck(targetType, {EH.currentConversation.subzone, questName}, EH.currentConversation.x, EH.currentConversation.y, nil) then
+    data = EH.LogCheck(targetType, {EH.currentConversation.subzone, questName}, EH.currentConversation.x, EH.currentConversation.y, nil)
+    if not data then -- when there is no node at the given location, save a new entry
         EH.Log(
             targetType,
             {
@@ -511,7 +529,8 @@ function EH.OnTargetChange(eventCode)
 
         local level = EH.GetUnitLevel(tag)
 
-        if EH.LogCheck("npc", {subzone, name }, x, y, 0.05) then
+    data = EH.LogCheck("npc", {subzone, name }, x, y, 0.05)
+    if not data then -- when there is no node at the given location, save a new entry
             EH.Log("npc", {subzone, name}, x, y, level)
         end
     end
@@ -524,7 +543,7 @@ end
 EH.validCategories = {
     "chest",
     "fish",
-    "provisioning",
+    --[[ "provisioning", ]]--
     "book",
     "vendor",
     "quest",
@@ -594,7 +613,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
             ["skyshard"] = 0,
             ["npc"] = 0,
             ["harvest"] = 0,
-            ["provisioning"] = 0,
+            --[[ ["provisioning"] = 0, ]]--
             ["chest"] = 0,
             ["fish"] = 0,
             ["book"] = 0,
@@ -607,6 +626,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
                 for zone, t1 in pairs(EH.savedVars[type].data) do
                     counter[type] = counter[type] + #EH.savedVars[type].data[zone]
                 end
+            --[[
             elseif type ~= "internal" and type == "provisioning" then
                 for zone, t1 in pairs(EH.savedVars[type].data) do
                     for item, t2 in pairs(EH.savedVars[type].data[zone]) do
@@ -615,6 +635,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
                         end
                     end
                 end
+            ]]--
             elseif type ~= "internal" then
                 for zone, t1 in pairs(EH.savedVars[type].data) do
                     for data, t2 in pairs(EH.savedVars[type].data[zone]) do
@@ -628,7 +649,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
         EH.Debug("Monster/NPCs: "     .. EH.NumberFormat(counter["npc"]))
         EH.Debug("Lore/Skill Books: " .. EH.NumberFormat(counter["book"]))
         EH.Debug("Harvest: "          .. EH.NumberFormat(counter["harvest"]))
-        EH.Debug("Provisioning: "     .. EH.NumberFormat(counter["provisioning"]))
+        --[[ EH.Debug("Provisioning: "     .. EH.NumberFormat(counter["provisioning"])) ]]--
         EH.Debug("Treasure Chests: "  .. EH.NumberFormat(counter["chest"]))
         EH.Debug("Fishing Pools: "    .. EH.NumberFormat(counter["fish"]))
         EH.Debug("Quests: "           .. EH.NumberFormat(counter["quest"]))
