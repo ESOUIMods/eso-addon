@@ -12,6 +12,9 @@ After logging into the game and gathering some data, and logging out completely 
 ```/esohead reset```
 Completely resets all gathered data.
 
+```/esohead reset DATATYPE```
+Resets a specific type of data
+
 ```/esohead debug on|off```
 Toggles verbose addon debugging.
 
