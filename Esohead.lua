@@ -537,6 +537,47 @@ function EH.OnTargetChange(eventCode)
 end
 
 -----------------------------------------
+--           Harvest Update            --
+-----------------------------------------
+
+function EH.UpdateHarvestInformation()
+
+    local oldData = EH.savedVars["harvest"].data
+    EH.savedVars["harvest"].data = {}
+    if not EH.savedVars["oldData"].data then
+        EH.savedVars["oldData"].data = {}
+    end
+
+	for map, data in pairs(oldData) do
+		if string.find(map, "^", 1, true) == nil then
+            d("Map : " .. map)
+			for profession, nodes in pairs(data) do
+				for _, node in pairs(nodes) do
+                    -- EH.saveData( map, node[1], node[2], profession, nodeName, node[4] )
+                    if EH.LogCheck("harvest", {map, profession}, node[1], node[2]) then
+                        EH.Log("harvest", {map, profession}, node[1], node[2], node[3], node[4], node[5])
+                    end
+				end
+			end
+			
+		else
+			if not EH.savedVars["oldData"].data[map] then
+				EH.savedVars["oldData"].data[map] = {}
+			end
+			
+			for profession, nodes in pairs(data) do
+				if not EH.savedVars["oldData"].data[map][profession] then
+					EH.savedVars["oldData"].data[map][profession] = {}
+				end
+				for _, node in pairs(nodes) do
+					table.insert(EH.savedVars["oldData"].data[map][profession], node)
+				end
+			end
+		end
+	end
+end
+
+-----------------------------------------
 --           Slash Command             --
 -----------------------------------------
 
@@ -603,6 +644,11 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
                 end
             end
         end
+
+    elseif commands[1] == "update" then
+        EH.UpdateHarvestInformation()
+
+        EH.Debug("Saved data has been updated")
 
     elseif commands[1] == "datalog" then
         EH.Debug("---")
