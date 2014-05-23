@@ -45,6 +45,7 @@ function EH.InitSavedVariables()
         ["npc"]          = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "npc", EH.dataDefault),
         ["vendor"]       = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "vendor", EH.dataDefault),
         ["quest"]        = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "quest", EH.dataDefault),
+        ["oldData"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 1, "oldData", EH.dataDefault),
     }
 
     if EH.savedVars["internal"].debug == 1 then
@@ -554,7 +555,8 @@ function EH.UpdateHarvestInformation()
 			for profession, nodes in pairs(data) do
 				for _, node in pairs(nodes) do
                     -- EH.saveData( map, node[1], node[2], profession, nodeName, node[4] )
-                    if EH.LogCheck("harvest", {map, profession}, node[1], node[2]) then
+                    data = EH.LogCheck("harvest", {map, profession}, node[1], node[2], nil)
+                    if not data then -- when there is no node at the given location, save a new entry
                         EH.Log("harvest", {map, profession}, node[1], node[2], node[3], node[4], node[5])
                     end
 				end
