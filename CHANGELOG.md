@@ -1,3 +1,8 @@
+##0.1.11
+
+Bugfixes
+- Sharlikran PR#4: Fixed checking for duplicate data entries
+
 ##0.1.10
 
 Bugfixes
