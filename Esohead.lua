@@ -31,6 +31,8 @@ function EH.Initialize()
         y = 0,
         subzone = ""
     }
+    EH.minDefault = 0.000025 -- 0.005^2
+    EH.minReticleover = 0.000049 -- 0.007^2
 end
 
 function EH.InitSavedVariables()
@@ -97,17 +99,16 @@ function EH.Log(type, nodes, ...)
 end
 
 -- Checks if we already have an entry for the object/npc within a certain x/y distance
-function EH.LogCheck(type, nodes, x, y, scale)
+function EH.LogCheck(type, nodes, x, y, scale, name)
     local log
     local sv
 
     local distance
     if scale == nil then
-        distance = 0.005
+        distance = EH.minDefault
     else
         distance = scale
     end
-
 
     if EH.savedVars[type] == nil or EH.savedVars[type].data == nil then
         return nil
@@ -121,17 +122,29 @@ function EH.LogCheck(type, nodes, x, y, scale)
             node = string.gsub(node, '\"', '\'')
         end
 
-        if sv[node] == nil then
-            sv[node] = {}
+        if sv[nodes[i]] == nil then
+            sv[nodes[i]] = {}
         end
-        sv = sv[node]
+        sv = sv[nodes[i]]
     end
 
     for i = 1, #sv do
         local item = sv[i]
 
-        if math.abs(item[1] - x) < distance and math.abs(item[2] - y) < distance then
+        dx = item[1] - x
+        dy = item[2] - y
+        -- (x - center_x)2 + (y - center_y)2 = r2, where center is the player
+        dist = math.pow(dx, 2) + math.pow(dy, 2)
+        if dx <= 0 and dy <= 0 then
             log = item
+        elseif dist < distance then
+            if name == nil then -- name is nil because it's not harvesting
+                log = item
+            else -- harvesting only
+                if item[4] == name then
+                    log = item
+                end
+            end
         end
     end
 
@@ -184,7 +197,7 @@ function EH.OnUpdate(time)
                 targetType = "skyshard"
 
                 if EH.name == "Skyshard" then
-                    data = EH.LogCheck(targetType, {subzone}, x, y, nil)
+                    data = EH.LogCheck(targetType, {subzone}, x, y, EH.minReticleover, nil)
                     if not data then
                         EH.Log(targetType, {subzone}, x, y)
                     end
@@ -194,7 +207,7 @@ function EH.OnUpdate(time)
             elseif type == INTERACTION_NONE and EH.action == GetString(SI_GAMECAMERAACTIONTYPE12) then
                 targetType = "chest"
 
-                data = EH.LogCheck(targetType, {subzone}, x, y, 0.05)
+                data = EH.LogCheck(targetType, {subzone}, x, y, EH.minReticleover, nil)
                 if not data then
                     EH.Log(targetType, {subzone}, x, y)
                 end
@@ -203,7 +216,7 @@ function EH.OnUpdate(time)
             elseif EH.action == GetString(SI_GAMECAMERAACTIONTYPE16) then
                 targetType = "fish"
 
-                data = EH.LogCheck(targetType, {subzone}, x, y, 0.05)
+                data = EH.LogCheck(targetType, {subzone}, x, y, EH.minReticleover, nil)
                 if not data then
                     EH.Log(targetType, {subzone}, x, y)
                 end
@@ -347,17 +360,6 @@ function EH.ItemLinkParse(link)
     }
 end
 
-function EH.IsDupeHarvestNode(map, profession, locX, locY, stackCount, nodeName, ItemID)
-    local nodes = EH.savedVars["harvest"]["data"][map][profession]
-    for _, node in pairs(nodes) do
-        if (node[1] == locX) and (node[2] == locY) and (node[4] == nodeName) then
-            return true
-        end
-    end
-    
-    return false
-end
-
 function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundCategory, lootType, lootedBySelf)
     if not IsGameCameraUIModeActive() then
         targetName = EH.name
@@ -395,13 +397,9 @@ function EH.OnLootReceived(eventCode, receivedBy, objectName, stackCount, soundC
                 EH.Log("provisioning", {subzone, material, link.id}, x, y, stackCount, targetName)
         else
         ]]--
-            data = EH.LogCheck("harvest", {subzone, material}, x, y, nil)
+            data = EH.LogCheck("harvest", {subzone, material}, x, y, nil, targetName)
             if not data then -- when there is no node at the given location, save a new entry
                 EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
-            else -- when there is an existing node of a different type, save a new entry
-                if not EH.IsDupeHarvestNode(subzone, material, x, y, stackCount, targetName, link.id) then
-                    EH.Log("harvest", {subzone, material}, x, y, stackCount, targetName, link.id)
-                end
             end
    --[[ end ]]--
     end
@@ -416,7 +414,7 @@ function EH.OnShowBook(eventCode, title, body, medium, showTitle)
 
     local targetType = "book"
 
-    data = EH.LogCheck(targetType, {subzone, title}, x, y, nil)
+    data = EH.LogCheck(targetType, {subzone, title}, x, y, nil, nil)
     if not data then -- when there is no node at the given location, save a new entry
         EH.Log(targetType, {subzone, title}, x, y)
     end
@@ -433,7 +431,7 @@ function EH.VendorOpened()
 
     local storeItems = {}
 
-    data = EH.LogCheck(targetType, {subzone, EH.name}, x, y, 0.1)
+    data = EH.LogCheck(targetType, {subzone, EH.name}, x, y, 0.1, nil) -- scale 0.1 prevents duplicate vendor info
     if not data then -- when there is no node at the given location, save a new entry
         for entryIndex = 1, GetNumStoreItems() do
             local icon, name, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyId1, currencyQuantity1, currencyIcon1,
@@ -468,6 +466,9 @@ end
 -----------------------------------------
 
 function EH.OnQuestAdded(_, questIndex)
+    -- This routine might need a check to make sure the player 
+    -- obtained the quest by interacting with the NPC and that
+    -- the quest was not shared by another player
     local questName = GetJournalQuestInfo(questIndex)
     local questLevel = GetJournalQuestLevel(questIndex)
 
@@ -477,7 +478,7 @@ function EH.OnQuestAdded(_, questIndex)
         return
     end
 
-    data = EH.LogCheck(targetType, {EH.currentConversation.subzone, questName}, EH.currentConversation.x, EH.currentConversation.y, nil)
+    data = EH.LogCheck(targetType, {EH.currentConversation.subzone, questName}, EH.currentConversation.x, EH.currentConversation.y, nil, nil)
     if not data then -- when there is no node at the given location, save a new entry
         EH.Log(
             targetType,
@@ -529,7 +530,7 @@ function EH.OnTargetChange(eventCode)
 
         local level = EH.GetUnitLevel(tag)
 
-    data = EH.LogCheck("npc", {subzone, name }, x, y, 0.05)
+    data = EH.LogCheck("npc", {subzone, name }, x, y, EH.minReticleover, nil)
     if not data then -- when there is no node at the given location, save a new entry
             EH.Log("npc", {subzone, name}, x, y, level)
         end
