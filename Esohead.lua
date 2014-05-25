@@ -477,8 +477,9 @@ function EH.OnQuestAdded(_, questIndex)
     if EH.currentConversation.npcName == "" or EH.currentConversation.npcName == nil then
         return
     end
-
-    data = EH.LogCheck(targetType, {EH.currentConversation.subzone, questName}, EH.currentConversation.x, EH.currentConversation.y, nil, nil)
+    -- quests are not tracked when your reticle is over the quest giver
+    -- however the NPC might move around, therefore range checking in needed
+    data = EH.LogCheck(targetType, {EH.currentConversation.subzone, questName}, EH.currentConversation.x, EH.currentConversation.y, EHM.minReticleover, nil)
     if not data then -- when there is no node at the given location, save a new entry
         EH.Log(
             targetType,
