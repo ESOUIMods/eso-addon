@@ -581,7 +581,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
     end
 
     if #commands == 0 then
-        return EH.Debug("Please enter a valid command")
+        return EH.Debug("Please enter a valid Esohead command")
     end
 
     if #commands == 2 and commands[1] == "debug" then
@@ -600,14 +600,14 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
                     EH.savedVars[type].data = {}
                 end
             end
-            EH.Debug("Saved data has been completely reset")
+            EH.Debug("Esohead saved data has been completely reset")
         else
             if commands[2] ~= "internal" then
                 if EH.IsValidCategory(commands[2]) then
                     EH.savedVars[commands[2]].data = {}
-                    EH.Debug("Saved data : " .. commands[2] .. " has been reset")
+                    EH.Debug("Esohead saved data : " .. commands[2] .. " has been reset")
                 else
-                    return EH.Debug("Please enter a valid category to reset")
+                    return EH.Debug("Please enter a valid Esohead category to reset")
                 end
             end
         end
