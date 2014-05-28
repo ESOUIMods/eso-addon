@@ -135,15 +135,7 @@ function EH.LogCheck(type, nodes, x, y, scale, name)
         dy = item[2] - y
         -- (x - center_x)2 + (y - center_y)2 = r2, where center is the player
         dist = math.pow(dx, 2) + math.pow(dy, 2)
-        if dx <= 0 and dy <= 0 then -- Dupe Node
-            if name == nil then -- name is nil because it's not harvesting
-                log = item
-            else -- harvesting only
-                if item[4] == name then
-                    log = item
-                end
-            end
-        elseif dist < distance then
+        if dist < distance then
             if name == nil then -- name is nil because it's not harvesting
                 log = item
             else -- harvesting only
