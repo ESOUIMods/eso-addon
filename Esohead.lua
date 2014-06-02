@@ -598,7 +598,10 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
                     EH.savedVars[commands[2]].data = {}
                     EH.Debug("Esohead saved data : " .. commands[2] .. " has been reset")
                 else
-                    return EH.Debug("Please enter a valid Esohead category to reset")
+                    EH.Debug("Please enter a valid Esohead category to reset")
+                    EH.Debug("valid catagoires are chest, fish, book, vendor,") 
+                    EH.Debug("quest, harvest, npc, and skyshard.")
+                    return
                 end
             end
         end
@@ -612,7 +615,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
             ["skyshard"] = 0,
             ["npc"] = 0,
             ["harvest"] = 0,
-            --[[ ["provisioning"] = 0, ]]--
+            ["provisioning"] = 0,
             ["chest"] = 0,
             ["fish"] = 0,
             ["book"] = 0,
@@ -625,7 +628,6 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
                 for zone, t1 in pairs(EH.savedVars[type].data) do
                     counter[type] = counter[type] + #EH.savedVars[type].data[zone]
                 end
-            --[[
             elseif type ~= "internal" and type == "provisioning" then
                 for zone, t1 in pairs(EH.savedVars[type].data) do
                     for item, t2 in pairs(EH.savedVars[type].data[zone]) do
@@ -634,7 +636,6 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
                         end
                     end
                 end
-            ]]--
             elseif type ~= "internal" then
                 for zone, t1 in pairs(EH.savedVars[type].data) do
                     for data, t2 in pairs(EH.savedVars[type].data[zone]) do
