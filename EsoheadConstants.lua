@@ -336,7 +336,7 @@ EH.validNodes = {
         "Trunk",
         "Urn",
         "Vase",
-        "Violet Copninus",
+        "Violet Coprinus",
         "Void Bloom",
         "Voidstone Ore",
         "Wardrobe",
