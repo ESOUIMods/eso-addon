@@ -1,7 +1,7 @@
 ## Title: Esohead
 ## Author: ZAM Network
 ## Version: 0.1.11
-## APIVersion: 100004
+## APIVersion: 100007
 ## SavedVariables: Esohead_SavedVariables
 
 Esohead.lua
