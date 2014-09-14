@@ -1,3 +1,15 @@
+##0.1.13
+
+(changes made by Seerah)
+
+Bugfixes
+- You cannot get position information for the reticleover unit any longer,
+	can only collect information of npcs that you interact with, and use the player position.
+	Moved the NPC logging code to the EH.OnChatterBegin function.
+	
+Changes
+- Removed residual provisioning tracking code
+
 ##0.1.12
 
 Minor Update

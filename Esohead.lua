@@ -41,7 +41,7 @@ function EH.InitSavedVariables()
         ["skyshard"]     = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "skyshard", EH.dataDefault),
         ["book"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "book", EH.dataDefault),
         ["harvest"]      = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 4, "harvest", EH.dataDefault),
-        ["provisioning"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 5, "provisioning", EH.dataDefault),
+        --[[ ["provisioning"] = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 5, "provisioning", EH.dataDefault), ]]--
         ["chest"]        = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "chest", EH.dataDefault),
         ["fish"]         = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "fish", EH.dataDefault),
         ["npc"]          = ZO_SavedVars:NewAccountWide("Esohead_SavedVariables", 2, "npc", EH.dataDefault),
@@ -507,6 +507,15 @@ function EH.OnChatterBegin()
     EH.currentConversation.x = x
     EH.currentConversation.y = y
     EH.currentConversation.subzone = subzone
+	
+	-- You cannot get position information for the reticleover unit any longer.
+	-- Can only collect information of npcs that you interact with, and use the player position.
+	-- Moved this logging code to this function.
+	local name = EH.currentConversation.npcName
+	if EH.LogCheck("npc", {subzone, name}, x, y, EH.minReticleover, nil) then
+		EH.Log("npc", {subzone, name}, x, y, npcLevel)
+	end
+
 end
 
 -----------------------------------------
@@ -514,7 +523,12 @@ end
 -----------------------------------------
 
 -- Fired when the reticle hovers a new target
-function EH.OnTargetChange(eventCode)
+
+-- You cannot get position information for the reticleover unit any longer.
+-- Can only collect information of npcs that you interact with, and use the player position.
+-- Moved the logging code to the EH.OnChatterBegin function.
+
+--[[function EH.OnTargetChange(eventCode)
     local tag = "reticleover"
     local type = GetUnitType(tag)
 
@@ -529,11 +543,11 @@ function EH.OnTargetChange(eventCode)
 
         local level = EH.GetUnitLevel(tag)
 
-    if EH.LogCheck("npc", {subzone, name }, x, y, EH.minReticleover, nil) then
-            EH.Log("npc", {subzone, name}, x, y, level)
-        end
-    end
-end
+		if EH.LogCheck("npc", {subzone, name }, x, y, EH.minReticleover, nil) then
+			EH.Log("npc", {subzone, name}, x, y, level)
+		end
+	end
+end]]
 
 -----------------------------------------
 --           Slash Command             --
@@ -598,8 +612,8 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
                     EH.savedVars[commands[2]].data = {}
                     EH.Debug("Esohead saved data : " .. commands[2] .. " has been reset")
                 else
-                    EH.Debug("Please enter a valid Esohead category to reset")
-                    EH.Debug("valid catagoires are chest, fish, book, vendor,") 
+                    EH.Debug("Please enter a valid Esohead category to reset.")
+                    EH.Debug("Valid categories are chest, fish, book, vendor,") 
                     EH.Debug("quest, harvest, npc, and skyshard.")
                     return
                 end
@@ -615,7 +629,7 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
             ["skyshard"] = 0,
             ["npc"] = 0,
             ["harvest"] = 0,
-            ["provisioning"] = 0,
+            --[[ ["provisioning"] = 0, ]]--
             ["chest"] = 0,
             ["fish"] = 0,
             ["book"] = 0,
@@ -628,14 +642,14 @@ SLASH_COMMANDS["/esohead"] = function (cmd)
                 for zone, t1 in pairs(EH.savedVars[type].data) do
                     counter[type] = counter[type] + #EH.savedVars[type].data[zone]
                 end
-            elseif type ~= "internal" and type == "provisioning" then
+            --[[ elseif type ~= "internal" and type == "provisioning" then
                 for zone, t1 in pairs(EH.savedVars[type].data) do
                     for item, t2 in pairs(EH.savedVars[type].data[zone]) do
                         for data, t3 in pairs(EH.savedVars[type].data[zone][item]) do
                             counter[type] = counter[type] + #EH.savedVars[type].data[zone][item][data]
                         end
                     end
-                end
+                end ]]--
             elseif type ~= "internal" then
                 for zone, t1 in pairs(EH.savedVars[type].data) do
                     for data, t2 in pairs(EH.savedVars[type].data[zone]) do
@@ -680,7 +694,7 @@ function EH.OnLoad(eventCode, addOnName)
     EH.InitSavedVariables()
     EH.savedVars["internal"]["language"] = EH.language
 
-    EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_RETICLE_TARGET_CHANGED, EH.OnTargetChange)
+    --EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_RETICLE_TARGET_CHANGED, EH.OnTargetChange)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_CHATTER_BEGIN, EH.OnChatterBegin)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_SHOW_BOOK, EH.OnShowBook)
     EVENT_MANAGER:RegisterForEvent("Esohead", EVENT_QUEST_ADDED, EH.OnQuestAdded)
