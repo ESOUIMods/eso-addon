@@ -1,3 +1,13 @@
+##0.1.12
+
+Minor Update
+- Sharlikran PR: Updated TOC
+
+##0.1.11
+
+Bugfixes
+- Sharlikran PR: Fixed checking for duplicate data entries
+
 ##0.1.10
 
 Bugfixes
