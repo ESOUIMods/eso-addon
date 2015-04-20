@@ -329,6 +329,7 @@ EH.validNodes = {
         "Radish",
         "Sack",
         "Saint's Hair",
+        "Safebox", -- Needs Verification
         "Silverweed",
         "Spidersilk",
         "Stinkhorn",
@@ -434,6 +435,7 @@ EH.validNodes = {
         "Radieschen",
         "Sack",
         "Heiliges Haar",
+        "Wertkasette", -- Needs Verification
         "Silverweed",
         "Spinnenseide",
         "Stinkmorchel",
@@ -540,6 +542,7 @@ EH.validNodes = {
         "Radis",
         "Sac",
         "Saint's Hair",
+        "Cassette", -- Needs Verification
         "Herbe d'argent",
         "Toile D'araignée",
         "Mutinus Elégans",
